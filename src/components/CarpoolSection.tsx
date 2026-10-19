@@ -156,11 +156,11 @@ export const INITIAL_AVAILABLE_DRIVERS: AvailableCarpoolDriver[] = [
     liveSpeedKmh: 64,
     lastPingSecondsAgo: 2,
     corridorStops: [
-      { id: 'stop-r1', name: 'Warangal', order: 0, location: { x: 74, y: 58 }, eta: '07:00 AM (Start)', isLegallyApprovedStop: true, legalStopType: 'Authorized Bus Terminal Bay' },
-      { id: 'stop-r2', name: 'Hanamkonda', order: 1, location: { x: 75, y: 42 }, eta: '07:30 AM (Pickup)', isLegallyApprovedStop: true, legalStopType: 'Designated Bus Bay' },
-      { id: 'stop-r3', name: 'Ghatkesar', order: 2, location: { x: 60, y: 36 }, eta: '09:30 AM', isLegallyApprovedStop: true, legalStopType: 'ORR Highway Transit Bay' },
-      { id: 'stop-r4', name: 'Uppal Metro Hub', order: 3, location: { x: 56, y: 34 }, eta: '10:00 AM', isLegallyApprovedStop: true, legalStopType: 'Metro Kiss-and-Ride Bay' },
-      { id: 'stop-r5', name: 'Hyderabad Central', order: 4, location: { x: 50, y: 36 }, eta: '10:30 AM (Driver destination)', isLegallyApprovedStop: true, legalStopType: 'Central Transit Hub' },
+      { id: 'stop-r1', name: 'Warangal', order: 0, location: { x: 74, y: 58 }, distanceFromOriginKm: 0, eta: '07:00 AM (Start)', isLegallyApprovedStop: true, legalStopType: 'Authorized Bus Terminal Bay' },
+      { id: 'stop-r2', name: 'Hanamkonda', order: 1, location: { x: 75, y: 42 }, distanceFromOriginKm: 10, eta: '07:30 AM (Pickup)', isLegallyApprovedStop: true, legalStopType: 'Designated Bus Bay' },
+      { id: 'stop-r3', name: 'Ghatkesar', order: 2, location: { x: 60, y: 36 }, distanceFromOriginKm: 120, eta: '09:30 AM', isLegallyApprovedStop: true, legalStopType: 'ORR Highway Transit Bay' },
+      { id: 'stop-r4', name: 'Uppal Metro Hub', order: 3, location: { x: 56, y: 34 }, distanceFromOriginKm: 140, eta: '10:00 AM', isLegallyApprovedStop: true, legalStopType: 'Metro Kiss-and-Ride Bay' },
+      { id: 'stop-r5', name: 'Hyderabad Central', order: 4, location: { x: 50, y: 36 }, distanceFromOriginKm: 150, eta: '10:30 AM (Driver destination)', isLegallyApprovedStop: true, legalStopType: 'Central Transit Hub' },
     ],
     routePolyline: [
       { x: 74, y: 58, streetName: 'Warangal Station Ramp' },
@@ -199,11 +199,11 @@ export const INITIAL_AVAILABLE_DRIVERS: AvailableCarpoolDriver[] = [
     liveSpeedKmh: 68,
     lastPingSecondsAgo: 1,
     corridorStops: [
-      { id: 'stop-c1', name: 'Hanamkonda', order: 0, location: { x: 75, y: 42 }, eta: '08:15 AM (Pickup)', isLegallyApprovedStop: true, legalStopType: 'Designated Bus Station Bay' },
-      { id: 'stop-c2', name: 'Kazipet', order: 1, location: { x: 68, y: 52 }, eta: '08:35 AM', isLegallyApprovedStop: true, legalStopType: 'Railway Transit Lane' },
-      { id: 'stop-c3', name: 'Ghatkesar', order: 2, location: { x: 60, y: 36 }, eta: '09:40 AM', isLegallyApprovedStop: true, legalStopType: 'ORR Toll Plazas' },
-      { id: 'stop-c4', name: 'Uppal', order: 3, location: { x: 56, y: 34 }, eta: '10:05 AM', isLegallyApprovedStop: true, legalStopType: 'Metro Kiss-and-Ride Bay' },
-      { id: 'stop-c5', name: 'Mindspace (Hitec)', order: 4, location: { x: 38, y: 50 }, eta: '10:45 AM (Destination)', isLegallyApprovedStop: true, legalStopType: 'IT Park Regulated Drop Bay' }
+      { id: 'stop-c1', name: 'Hanamkonda', order: 0, location: { x: 75, y: 42 }, distanceFromOriginKm: 0, eta: '08:15 AM (Pickup)', isLegallyApprovedStop: true, legalStopType: 'Designated Bus Station Bay' },
+      { id: 'stop-c2', name: 'Kazipet', order: 1, location: { x: 68, y: 52 }, distanceFromOriginKm: 15, eta: '08:35 AM', isLegallyApprovedStop: true, legalStopType: 'Railway Transit Lane' },
+      { id: 'stop-c3', name: 'Ghatkesar', order: 2, location: { x: 60, y: 36 }, distanceFromOriginKm: 115, eta: '09:40 AM', isLegallyApprovedStop: true, legalStopType: 'ORR Toll Plazas' },
+      { id: 'stop-c4', name: 'Uppal', order: 3, location: { x: 56, y: 34 }, distanceFromOriginKm: 135, eta: '10:05 AM', isLegallyApprovedStop: true, legalStopType: 'Metro Kiss-and-Ride Bay' },
+      { id: 'stop-c5', name: 'Mindspace (Hitec)', order: 4, location: { x: 38, y: 50 }, distanceFromOriginKm: 155, eta: '10:45 AM (Destination)', isLegallyApprovedStop: true, legalStopType: 'IT Park Regulated Drop Bay' }
     ],
     routePolyline: [
       { x: 75, y: 42, streetName: 'Hanamkonda Bypass' },
@@ -241,11 +241,11 @@ export const INITIAL_AVAILABLE_DRIVERS: AvailableCarpoolDriver[] = [
     liveSpeedKmh: 58,
     lastPingSecondsAgo: 3,
     corridorStops: [
-      { id: 'stop-s1', name: 'Warangal', order: 0, location: { x: 74, y: 58 }, eta: '07:30 AM (Start)', isLegallyApprovedStop: true, legalStopType: 'Authorized Bus Terminal Bay' },
-      { id: 'stop-s2', name: 'Hanamkonda', order: 1, location: { x: 75, y: 42 }, eta: '08:00 AM (Pickup)', isLegallyApprovedStop: true, legalStopType: 'Designated Bus Bay' },
-      { id: 'stop-s3', name: 'Ghatkesar', order: 2, location: { x: 60, y: 36 }, eta: '09:45 AM', isLegallyApprovedStop: true, legalStopType: 'ORR Highway Transit Bay' },
-      { id: 'stop-s4', name: 'Uppal Metro Hub', order: 3, location: { x: 56, y: 34 }, eta: '10:10 AM', isLegallyApprovedStop: true, legalStopType: 'Metro Kiss-and-Ride Bay' },
-      { id: 'stop-s5', name: 'LB Nagar Hub', order: 4, location: { x: 54, y: 46 }, eta: '10:35 AM (Driver destination)', isLegallyApprovedStop: true, legalStopType: 'Ring Road Transit Hub' }
+      { id: 'stop-s1', name: 'Warangal', order: 0, location: { x: 74, y: 58 }, distanceFromOriginKm: 0, eta: '07:30 AM (Start)', isLegallyApprovedStop: true, legalStopType: 'Authorized Bus Terminal Bay' },
+      { id: 'stop-s2', name: 'Hanamkonda', order: 1, location: { x: 75, y: 42 }, distanceFromOriginKm: 10, eta: '08:00 AM (Pickup)', isLegallyApprovedStop: true, legalStopType: 'Designated Bus Bay' },
+      { id: 'stop-s3', name: 'Ghatkesar', order: 2, location: { x: 60, y: 36 }, distanceFromOriginKm: 125, eta: '09:45 AM', isLegallyApprovedStop: true, legalStopType: 'ORR Highway Transit Bay' },
+      { id: 'stop-s4', name: 'Uppal Metro Hub', order: 3, location: { x: 56, y: 34 }, distanceFromOriginKm: 145, eta: '10:10 AM', isLegallyApprovedStop: true, legalStopType: 'Metro Kiss-and-Ride Bay' },
+      { id: 'stop-s5', name: 'LB Nagar Hub', order: 4, location: { x: 54, y: 46 }, distanceFromOriginKm: 160, eta: '10:35 AM (Driver destination)', isLegallyApprovedStop: true, legalStopType: 'Ring Road Transit Hub' }
     ],
     routePolyline: [
       { x: 74, y: 58, streetName: 'Warangal Highway' },
@@ -283,11 +283,11 @@ export const INITIAL_AVAILABLE_DRIVERS: AvailableCarpoolDriver[] = [
     liveSpeedKmh: 60,
     lastPingSecondsAgo: 2,
     corridorStops: [
-      { id: 'stop-v1', name: 'Warangal', order: 0, location: { x: 74, y: 58 }, eta: '08:15 AM (Start)', isLegallyApprovedStop: true, legalStopType: 'Authorized Bus Terminal Bay' },
-      { id: 'stop-v2', name: 'Hanamkonda', order: 1, location: { x: 75, y: 42 }, eta: '08:45 AM (Pickup)', isLegallyApprovedStop: true, legalStopType: 'Designated Bus Bay' },
-      { id: 'stop-v3', name: 'Kazipet', order: 2, location: { x: 68, y: 52 }, eta: '09:10 AM', isLegallyApprovedStop: true, legalStopType: 'Railway Transit Lane' },
-      { id: 'stop-v4', name: 'Jangaon', order: 3, location: { x: 66, y: 44 }, eta: '09:40 AM', isLegallyApprovedStop: true, legalStopType: 'Highway Passenger Bay' },
-      { id: 'stop-v5', name: 'Ghatkesar', order: 4, location: { x: 60, y: 36 }, eta: '10:15 AM (Driver destination)', isLegallyApprovedStop: true, legalStopType: 'ORR Highway Transit Bay' }
+      { id: 'stop-v1', name: 'Warangal', order: 0, location: { x: 74, y: 58 }, distanceFromOriginKm: 0, eta: '08:15 AM (Start)', isLegallyApprovedStop: true, legalStopType: 'Authorized Bus Terminal Bay' },
+      { id: 'stop-v2', name: 'Hanamkonda', order: 1, location: { x: 75, y: 42 }, distanceFromOriginKm: 10, eta: '08:45 AM (Pickup)', isLegallyApprovedStop: true, legalStopType: 'Designated Bus Bay' },
+      { id: 'stop-v3', name: 'Kazipet', order: 2, location: { x: 68, y: 52 }, distanceFromOriginKm: 18, eta: '09:10 AM', isLegallyApprovedStop: true, legalStopType: 'Railway Transit Lane' },
+      { id: 'stop-v4', name: 'Jangaon', order: 3, location: { x: 66, y: 44 }, distanceFromOriginKm: 55, eta: '09:40 AM', isLegallyApprovedStop: true, legalStopType: 'Highway Passenger Bay' },
+      { id: 'stop-v5', name: 'Ghatkesar', order: 4, location: { x: 60, y: 36 }, distanceFromOriginKm: 125, eta: '10:15 AM (Driver destination)', isLegallyApprovedStop: true, legalStopType: 'ORR Highway Transit Bay' }
     ],
     routePolyline: [
       { x: 74, y: 58, streetName: 'Warangal Road' },
@@ -325,10 +325,10 @@ export const INITIAL_AVAILABLE_DRIVERS: AvailableCarpoolDriver[] = [
     liveSpeedKmh: 62,
     lastPingSecondsAgo: 1,
     corridorStops: [
-      { id: 'stop-a1', name: 'Warangal', order: 0, location: { x: 74, y: 58 }, eta: '08:30 AM', isLegallyApprovedStop: true, legalStopType: 'Authorized Bus Terminal Bay' },
-      { id: 'stop-a2', name: 'Hanamkonda', order: 1, location: { x: 75, y: 42 }, eta: '09:00 AM (Pickup)', isLegallyApprovedStop: true, legalStopType: 'Designated Bus Bay' },
-      { id: 'stop-a3', name: 'Ghatkesar', order: 2, location: { x: 60, y: 36 }, eta: '10:00 AM', isLegallyApprovedStop: true, legalStopType: 'ORR Highway Transit Bay' },
-      { id: 'stop-a4', name: 'Secunderabad Stn', order: 3, location: { x: 52, y: 30 }, eta: '10:45 AM (Driver destination)', isLegallyApprovedStop: true, legalStopType: 'Railway Terminal Bay' }
+      { id: 'stop-a1', name: 'Warangal', order: 0, location: { x: 74, y: 58 }, distanceFromOriginKm: 0, eta: '08:30 AM', isLegallyApprovedStop: true, legalStopType: 'Authorized Bus Terminal Bay' },
+      { id: 'stop-a2', name: 'Hanamkonda', order: 1, location: { x: 75, y: 42 }, distanceFromOriginKm: 10, eta: '09:00 AM (Pickup)', isLegallyApprovedStop: true, legalStopType: 'Designated Bus Bay' },
+      { id: 'stop-a3', name: 'Ghatkesar', order: 2, location: { x: 60, y: 36 }, distanceFromOriginKm: 120, eta: '10:00 AM', isLegallyApprovedStop: true, legalStopType: 'ORR Highway Transit Bay' },
+      { id: 'stop-a4', name: 'Secunderabad Stn', order: 3, location: { x: 52, y: 30 }, distanceFromOriginKm: 145, eta: '10:45 AM (Driver destination)', isLegallyApprovedStop: true, legalStopType: 'Railway Terminal Bay' }
     ],
     routePolyline: [
       { x: 74, y: 58, streetName: 'Warangal Highway' },
@@ -365,9 +365,9 @@ export const INITIAL_AVAILABLE_DRIVERS: AvailableCarpoolDriver[] = [
     liveSpeedKmh: 54,
     lastPingSecondsAgo: 4,
     corridorStops: [
-      { id: 'stop-k1', name: 'Warangal ORR', order: 0, location: { x: 80, y: 65 }, eta: '09:40 AM', isLegallyApprovedStop: true, legalStopType: 'ORR Highway Transit Bay' },
-      { id: 'stop-k2', name: 'Hunter Road', order: 1, location: { x: 85, y: 55 }, eta: '10:05 AM', isLegallyApprovedStop: true, legalStopType: 'Bus Shelter Bay' },
-      { id: 'stop-k3', name: 'Karimnagar Bypass', order: 2, location: { x: 92, y: 25 }, eta: '11:30 AM (Driver destination)', isLegallyApprovedStop: true, legalStopType: 'District Highway Bay' }
+      { id: 'stop-k1', name: 'Warangal ORR', order: 0, location: { x: 80, y: 65 }, distanceFromOriginKm: 0, eta: '09:40 AM', isLegallyApprovedStop: true, legalStopType: 'ORR Highway Transit Bay' },
+      { id: 'stop-k2', name: 'Hunter Road', order: 1, location: { x: 85, y: 55 }, distanceFromOriginKm: 10, eta: '10:05 AM', isLegallyApprovedStop: true, legalStopType: 'Bus Shelter Bay' },
+      { id: 'stop-k3', name: 'Karimnagar Bypass', order: 2, location: { x: 92, y: 25 }, distanceFromOriginKm: 70, eta: '11:30 AM (Driver destination)', isLegallyApprovedStop: true, legalStopType: 'District Highway Bay' }
     ],
     routePolyline: [
       { x: 80, y: 65, streetName: 'Warangal North ORR' },
@@ -395,7 +395,7 @@ export interface CarpoolInteractiveSectionProps {
   onSwitchTab?: (tab: 'BOOKING' | 'CARPOOL' | 'OUTSTATION' | 'HISTORY' | 'PROFILE') => void;
 }
 
-export type CarpoolScreenStep = 'HOME' | 'AVAILABLE_RIDES' | 'RIDE_DETAILS' | 'SELECT_DROP' | 'BOOKING_SUMMARY' | 'LIVE_COCKPIT';
+export type CarpoolScreenStep = 'HOME' | 'AVAILABLE_RIDES' | 'RIDE_DETAILS' | 'BOOKING_SUMMARY' | 'LIVE_COCKPIT';
 
 export const CarpoolSection: React.FC<CarpoolInteractiveSectionProps> = ({
   currentAddress,
@@ -413,11 +413,14 @@ export const CarpoolSection: React.FC<CarpoolInteractiveSectionProps> = ({
   // Search inputs
   const [pickupLocation, setPickupLocation] = useState(currentAddress || 'Hanamkonda, Warangal');
   const [destinationLocation, setDestinationLocation] = useState(passengerDestination || 'Hyderabad Central');
+  const [searchedPickupLocation, setSearchedPickupLocation] = useState(currentAddress || 'Hanamkonda, Warangal');
+  const [searchedDestinationLocation, setSearchedDestinationLocation] = useState(passengerDestination || 'Hyderabad Central');
+  const [locationSearchError, setLocationSearchError] = useState<string | null>(null);
+  const dropoffSearchInputRef = useRef<HTMLInputElement>(null);
   const [travelDate, setTravelDate] = useState<'Today, 12 Oct' | 'Tomorrow, 13 Oct'>('Today, 12 Oct');
 
   // Edit Route Locations & Multi-Stop Edit State
   const [showEditLocationsModal, setShowEditLocationsModal] = useState(false);
-  const [isInlineEditing, setIsInlineEditing] = useState(false);
   const [editPickupDraft, setEditPickupDraft] = useState('Mindspace IT Park Circular Rd, Madhapur');
   const [editDropoffDraft, setEditDropoffDraft] = useState('Hyderabad');
   const [activeEditField, setActiveEditField] = useState<'PICKUP' | 'DROPOFF' | string>('PICKUP');
@@ -431,11 +434,6 @@ export const CarpoolSection: React.FC<CarpoolInteractiveSectionProps> = ({
     { id: 'stop-ghat', name: 'Ghatkesar', eta: '+1 hr 15m', legalStopType: 'Highway Tollway' },
     { id: 'stop-uppal', name: 'Uppal', eta: '+1 hr 45m', legalStopType: 'Metro Interchange' }
   ]);
-
-  // GPS Live State
-  const [isGpsActive, setIsGpsActive] = useState(false);
-  const [gpsAccuracyMeters, setGpsAccuracyMeters] = useState<number | null>(null);
-  const [liveGpsCoords, setLiveGpsCoords] = useState<{ lat: number; lng: number } | null>(null);
 
   // Filter category in Available Rides
   const [selectedFilterCategory, setSelectedFilterCategory] = useState<'ALL' | 'DIRECT' | 'CONNECTED' | 'PARTIAL' | 'NO_MATCH'>('ALL');
@@ -549,36 +547,14 @@ export const CarpoolSection: React.FC<CarpoolInteractiveSectionProps> = ({
   // Emergency SOS Modal
   const [showSosModal, setShowSosModal] = useState(false);
 
-  // 1. Live Geolocation Watcher
+  // Simulated drivers only need telemetry while their map or ride list is visible.
   useEffect(() => {
-    if (typeof window === 'undefined' || !('geolocation' in navigator)) return;
-    
-    const watchId = navigator.geolocation.watchPosition(
-      (pos) => {
-        setIsGpsActive(true);
-        setGpsAccuracyMeters(Math.round(pos.coords.accuracy));
-        setLiveGpsCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-      },
-      () => {
-        // Fallback to active corridor GPS tracking
-        setIsGpsActive(true);
-        setGpsAccuracyMeters(12);
-      },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 3000 }
-    );
+    if (currentScreen !== 'HOME' && currentScreen !== 'AVAILABLE_RIDES') return;
 
-    return () => {
-      navigator.geolocation.clearWatch(watchId);
-    };
-  }, []);
-
-  // 2. Real-time Live Drivers Telemetry Ticker (Moves cars live along highway polyline)
-  useEffect(() => {
-    const timer = setInterval(() => {
+    const updateDriverTelemetry = () => {
       setLiveDrivers(prevDrivers => {
         return prevDrivers.map(driver => {
-          // Advance progress slightly along the route polyline
-          const nextProg = driver.driverProgress >= 0.96 ? 0.08 : +(driver.driverProgress + 0.006).toFixed(4);
+          const nextProg = driver.driverProgress >= 0.96 ? 0.08 : +(driver.driverProgress + 0.02).toFixed(4);
           
           // Interpolate current (x, y) along routePolyline
           let curX = driver.routePolyline[0]?.x || 75;
@@ -606,10 +582,28 @@ export const CarpoolSection: React.FC<CarpoolInteractiveSectionProps> = ({
           };
         });
       });
-    }, 1500);
+    };
 
-    return () => clearInterval(timer);
-  }, []);
+    let timer: ReturnType<typeof setInterval> | null = null;
+    const startTelemetry = () => {
+      if (!timer && !document.hidden) timer = setInterval(updateDriverTelemetry, 5000);
+    };
+    const stopTelemetry = () => {
+      if (timer) clearInterval(timer);
+      timer = null;
+    };
+    const handleVisibilityChange = () => {
+      if (document.hidden) stopTelemetry();
+      else startTelemetry();
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    startTelemetry();
+    return () => {
+      stopTelemetry();
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [currentScreen]);
 
   // 3. Real-time Active Booking Telemetry & Lifecycle Ticker
   useEffect(() => {
@@ -617,12 +611,13 @@ export const CarpoolSection: React.FC<CarpoolInteractiveSectionProps> = ({
       return;
     }
 
-    const bookingTicker = setInterval(() => {
+    let bookingTicker: ReturnType<typeof setInterval> | null = null;
+    const updateBookingTelemetry = () => {
       setActiveLiveBooking(prev => {
         if (!prev) return null;
 
         // Progress vehicle towards pickup or destination
-        const newDist = Math.max(0, +(prev.distanceToPickupKm - 0.08).toFixed(2));
+        const newDist = Math.max(0, +(prev.distanceToPickupKm - 0.13).toFixed(2));
         const newEta = Math.max(0, Math.ceil(newDist * 1.8));
 
         let nextStatus = prev.status;
@@ -632,7 +627,7 @@ export const CarpoolSection: React.FC<CarpoolInteractiveSectionProps> = ({
         }
 
         // Slightly move driver coordinates
-        const progressInc = prev.status === 'IN_TRANSIT' ? 0.012 : 0.005;
+        const progressInc = prev.status === 'IN_TRANSIT' ? 0.02 : 0.0083;
         const nextProgress = Math.min(1.0, +(prev.driverProgress + progressInc).toFixed(4));
         
         const updatedBooking: ActiveCarpoolBooking = {
@@ -650,19 +645,35 @@ export const CarpoolSection: React.FC<CarpoolInteractiveSectionProps> = ({
 
         return updatedBooking;
       });
-    }, 1800);
+    };
+    const startBookingTicker = () => {
+      if (!bookingTicker && !document.hidden) bookingTicker = setInterval(updateBookingTelemetry, 3000);
+    };
+    const stopBookingTicker = () => {
+      if (bookingTicker) clearInterval(bookingTicker);
+      bookingTicker = null;
+    };
+    const handleVisibilityChange = () => {
+      if (document.hidden) stopBookingTicker();
+      else startBookingTicker();
+    };
 
-    return () => clearInterval(bookingTicker);
-  }, [activeLiveBooking]);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    startBookingTicker();
+    return () => {
+      stopBookingTicker();
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [activeLiveBooking?.bookingId, activeLiveBooking?.status]);
 
   // Derived passenger positions
   const pickupPos = useMemo(() => {
-    return getCoordinatesForName(pickupLocation, { x: 75, y: 42 });
-  }, [pickupLocation]);
+    return getCoordinatesForName(searchedPickupLocation, { x: 75, y: 42 });
+  }, [searchedPickupLocation]);
 
   const destPos = useMemo(() => {
-    return getCoordinatesForName(destinationLocation, { x: 50, y: 36 });
-  }, [destinationLocation]);
+    return getCoordinatesForName(searchedDestinationLocation, { x: 50, y: 36 });
+  }, [searchedDestinationLocation]);
 
   // Dynamic Route Matching Engine across all live drivers
   const rankedDriversWithMatches = useMemo(() => {
@@ -671,16 +682,16 @@ export const CarpoolSection: React.FC<CarpoolInteractiveSectionProps> = ({
         driver,
         pickupPos,
         destPos,
-        destinationLocation,
+        searchedDestinationLocation,
         driver.initialBookings,
-        pickupLocation
+        searchedPickupLocation
       );
       return {
         ...driver,
         match: matchAnalysis
       };
     }).sort((a, b) => b.match.compatibilityScore - a.match.compatibilityScore);
-  }, [liveDrivers, pickupPos, destPos, destinationLocation, pickupLocation]);
+  }, [liveDrivers, pickupPos, destPos, searchedDestinationLocation, searchedPickupLocation]);
 
   // Category counts for filter tabs
   const matchCategoryCounts = useMemo(() => {
@@ -749,11 +760,11 @@ export const CarpoolSection: React.FC<CarpoolInteractiveSectionProps> = ({
         activeMatch,
         activeDriver,
         selectedDropPointId,
-        destinationLocation
+        searchedDestinationLocation
       );
     }
     return activeMatch;
-  }, [activeMatch, activeDriver, selectedDropPointId, destinationLocation]);
+  }, [activeMatch, activeDriver, selectedDropPointId, searchedDestinationLocation]);
 
   // Dynamic fare calculation for intermediate stop
   const dynamicSelectedFare = activeReevaluatedMatch.calculatedFare;
@@ -764,8 +775,33 @@ export const CarpoolSection: React.FC<CarpoolInteractiveSectionProps> = ({
     const temp = pickupLocation;
     setPickupLocation(destinationLocation);
     setDestinationLocation(temp);
-    onUpdatePickupLocation?.(destinationLocation);
-    onSelectDropoffLocation?.(temp);
+    setSelectedDropPointId(null);
+  };
+
+  const handleSearchCarpoolRides = () => {
+    const pickup = pickupLocation.trim();
+    const destination = destinationLocation.trim();
+    if (!pickup || !destination) {
+      setLocationSearchError('Enter both a pickup and a destination to search.');
+      sounds.playAlert();
+      return;
+    }
+
+    setLocationSearchError(null);
+    setSearchedPickupLocation(pickup);
+    setSearchedDestinationLocation(destination);
+    onUpdatePickupLocation?.(pickup);
+    onSelectDropoffLocation?.(destination);
+    setSelectedDropPointId(null);
+    sounds.playSuccess();
+    setCurrentScreen('AVAILABLE_RIDES');
+  };
+
+  const handleLocationInputKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter' || event.key === 'Search' || event.key === 'Go') {
+      event.preventDefault();
+      handleSearchCarpoolRides();
+    }
   };
 
   // Open edit modal pre-seeded with current values
@@ -853,6 +889,8 @@ export const CarpoolSection: React.FC<CarpoolInteractiveSectionProps> = ({
     const finalDropoff = (customDropoff !== undefined ? customDropoff : editDropoffDraft).trim() || 'Hyderabad Central';
     setPickupLocation(finalPickup);
     setDestinationLocation(finalDropoff);
+    setSearchedPickupLocation(finalPickup);
+    setSearchedDestinationLocation(finalDropoff);
     onUpdatePickupLocation?.(finalPickup);
     onSelectDropoffLocation?.(finalDropoff);
     setSelectedDropPointId(null);
@@ -909,7 +947,6 @@ export const CarpoolSection: React.FC<CarpoolInteractiveSectionProps> = ({
     }
 
     setShowEditLocationsModal(false);
-    setIsInlineEditing(false);
   };
 
   const handleSwapDraftLocations = () => {
@@ -923,6 +960,7 @@ export const CarpoolSection: React.FC<CarpoolInteractiveSectionProps> = ({
   const handleSelectQuickDestination = (dest: string) => {
     sounds.playTap();
     setDestinationLocation(dest);
+    setSearchedDestinationLocation(dest);
     onSelectDropoffLocation?.(dest);
     setSelectedDropPointId(null);
   };
@@ -933,20 +971,21 @@ export const CarpoolSection: React.FC<CarpoolInteractiveSectionProps> = ({
     if (typeof window !== 'undefined' && 'geolocation' in navigator) {
       navigator.geolocation.getCurrentPosition(
         (pos) => {
-          setIsGpsActive(true);
-          setGpsAccuracyMeters(Math.round(pos.coords.accuracy));
-          setLiveGpsCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
           const gpsLoc = `Hanamkonda Bus Terminal (GPS ±${Math.round(pos.coords.accuracy)}m)`;
           setPickupLocation(gpsLoc);
+          setSearchedPickupLocation('Hanamkonda Bus Terminal');
           setEditPickupDraft(gpsLoc);
           onUpdatePickupLocation?.('Hanamkonda Bus Terminal');
+          setLocationSearchError(null);
           sounds.playSuccess();
         },
         () => {
-          setIsGpsActive(true);
           const fallbackGps = 'Hanamkonda Bus Terminal (GPS Locked)';
           setPickupLocation(fallbackGps);
+          setSearchedPickupLocation('Hanamkonda Bus Terminal');
           setEditPickupDraft(fallbackGps);
+          onUpdatePickupLocation?.('Hanamkonda Bus Terminal');
+          setLocationSearchError(null);
           sounds.playSuccess();
         },
         { enableHighAccuracy: true, timeout: 6000 }
@@ -964,6 +1003,8 @@ export const CarpoolSection: React.FC<CarpoolInteractiveSectionProps> = ({
       // Driver starting point (Hanamkonda) is identical to Passenger pickup location
       setPickupLocation('Hanamkonda, Warangal');
       setDestinationLocation('Mindspace (Hitec)');
+      setSearchedPickupLocation('Hanamkonda, Warangal');
+      setSearchedDestinationLocation('Mindspace (Hitec)');
       setSelectedDriverId('pool-suresh');
       setSelectedDropPointId(null);
       onUpdatePickupLocation?.('Hanamkonda, Warangal');
@@ -973,6 +1014,8 @@ export const CarpoolSection: React.FC<CarpoolInteractiveSectionProps> = ({
       // Driver starts at Warangal, but passes through Ghatkesar and Uppal
       setPickupLocation('Ghatkesar');
       setDestinationLocation('Uppal Metro Hub');
+      setSearchedPickupLocation('Ghatkesar');
+      setSearchedDestinationLocation('Uppal Metro Hub');
       setSelectedDriverId('pool-ramesh');
       setSelectedDropPointId('stop-r4');
       onUpdatePickupLocation?.('Ghatkesar');
@@ -982,6 +1025,8 @@ export const CarpoolSection: React.FC<CarpoolInteractiveSectionProps> = ({
       // Driver final destination is further along (Hyderabad), passenger destination matches intermediate stop (Uppal)
       setPickupLocation('Warangal');
       setDestinationLocation('Uppal Metro Hub');
+      setSearchedPickupLocation('Warangal');
+      setSearchedDestinationLocation('Uppal Metro Hub');
       setSelectedDriverId('pool-ramesh');
       setSelectedDropPointId('stop-r4');
       onUpdatePickupLocation?.('Warangal');
@@ -991,6 +1036,8 @@ export const CarpoolSection: React.FC<CarpoolInteractiveSectionProps> = ({
       // Destination is off-route (e.g. RGIA Airport), driver reaches Uppal/Hyderabad
       setPickupLocation('Warangal');
       setDestinationLocation('RGIA Airport');
+      setSearchedPickupLocation('Warangal');
+      setSearchedDestinationLocation('RGIA Airport');
       setSelectedDriverId('pool-ramesh');
       setSelectedDropPointId('stop-r4');
       onUpdatePickupLocation?.('Warangal');
@@ -999,6 +1046,8 @@ export const CarpoolSection: React.FC<CarpoolInteractiveSectionProps> = ({
       // Error Test Case: Passenger pickup location matches rider destination
       setPickupLocation('Hyderabad Central');
       setDestinationLocation('Hyderabad Central');
+      setSearchedPickupLocation('Hyderabad Central');
+      setSearchedDestinationLocation('Hyderabad Central');
       setSelectedDriverId('pool-ramesh');
       setSelectedDropPointId('stop-r5');
       onUpdatePickupLocation?.('Hyderabad Central');
@@ -1129,20 +1178,22 @@ export const CarpoolSection: React.FC<CarpoolInteractiveSectionProps> = ({
     // Order 1..N: Intermediate waypoints
     // Order N+1: Final destination
     const corridorStops: CarpoolRouteStop[] = [];
+    const activeWaypoints = offerWaypoints.filter(wp => wp.enabled !== false);
+    const estimatedRouteDistanceKm = 145;
+    const routeSegmentCount = Math.max(1, activeWaypoints.length + 1);
     const originCoords = getCoordinatesForName(offerOrigin, { x: 75, y: 42 });
     corridorStops.push({
       id: `${newId}-origin`,
       name: offerOrigin,
       order: 0,
       location: originCoords,
+      distanceFromOriginKm: 0,
       eta: `${offerDepTime} (Start)`,
       isLegallyApprovedStop: true,
       legalStopType: 'Authorized Bus Terminal Bay'
     });
 
     // Only include enabled waypoints (exclude any the driver toggled off as unsafe)
-    const activeWaypoints = offerWaypoints.filter(wp => wp.enabled !== false);
-
     activeWaypoints.forEach((wp, idx) => {
       const wpCoords = getCoordinatesForName(wp.name, { x: 68 - idx * 5, y: 46 - idx * 3 });
       corridorStops.push({
@@ -1150,6 +1201,7 @@ export const CarpoolSection: React.FC<CarpoolInteractiveSectionProps> = ({
         name: wp.name,
         order: idx + 1,
         location: wpCoords,
+        distanceFromOriginKm: +((idx + 1) * estimatedRouteDistanceKm / routeSegmentCount).toFixed(1),
         eta: wp.etaOffset,
         isLegallyApprovedStop: true,
         legalStopType: wp.legalStopType
@@ -1162,6 +1214,7 @@ export const CarpoolSection: React.FC<CarpoolInteractiveSectionProps> = ({
       name: offerDest,
       order: activeWaypoints.length + 1,
       location: destCoords,
+      distanceFromOriginKm: estimatedRouteDistanceKm,
       eta: `+2 hrs (Destination)`,
       isLegallyApprovedStop: true,
       legalStopType: 'Central Transit Hub'
@@ -1345,7 +1398,7 @@ export const CarpoolSection: React.FC<CarpoolInteractiveSectionProps> = ({
       localStorage.removeItem('zaldi_active_carpool_booking');
     } catch {}
     
-    setCurrentScreen('HOME');
+    setCurrentScreen('AVAILABLE_RIDES');
   };
 
   // Modern Vector Vehicle Renders
@@ -1359,27 +1412,6 @@ export const CarpoolSection: React.FC<CarpoolInteractiveSectionProps> = ({
 
   return (
     <div className="w-full h-full bg-slate-50 flex flex-col font-sans select-none relative overflow-hidden text-slate-900">
-      
-      {/* Active Live Ride Sticky Status Pill */}
-      {activeLiveBooking && currentScreen !== 'LIVE_COCKPIT' && (
-        <div 
-          onClick={() => { sounds.playTap(); setCurrentScreen('LIVE_COCKPIT'); }}
-          className="bg-emerald-600 text-white px-4 py-2 flex items-center justify-between z-30 shadow-md cursor-pointer text-xs animate-in slide-in-from-top"
-        >
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-white animate-ping"></span>
-            <span className="font-bold">
-              Ride Active with <strong>{activeLiveBooking.driverName}</strong>
-            </span>
-            <span className="text-emerald-100 font-medium">· ETA: {activeLiveBooking.etaMinutes} mins</span>
-          </div>
-
-          <div className="flex items-center gap-1 font-black text-xs underline">
-            <span>View Live Tracking</span>
-            <ChevronRight className="w-4 h-4" />
-          </div>
-        </div>
-      )}
 
       {/* =========================================================================
           SCREEN 1: SEARCH & LIVE CORRIDOR DISCOVERY
@@ -1540,9 +1572,16 @@ export const CarpoolSection: React.FC<CarpoolInteractiveSectionProps> = ({
                         <input 
                           type="text" 
                           value={pickupLocation}
+                          onKeyDown={event => {
+                            if (event.key === 'Enter') {
+                              event.preventDefault();
+                              dropoffSearchInputRef.current?.focus();
+                            }
+                          }}
+                          enterKeyHint="next"
                           onChange={(e) => {
                             setPickupLocation(e.target.value);
-                            onUpdatePickupLocation?.(e.target.value);
+                            setLocationSearchError(null);
                           }}
                           className="w-full text-xs font-black text-slate-900 bg-transparent outline-none truncate"
                           placeholder="Current pickup area (e.g. Warangal)"
@@ -1550,7 +1589,7 @@ export const CarpoolSection: React.FC<CarpoolInteractiveSectionProps> = ({
                         {pickupLocation && (
                           <button
                             type="button"
-                            onClick={() => { setPickupLocation(''); onUpdatePickupLocation?.(''); }}
+                            onClick={() => { setPickupLocation(''); setLocationSearchError(null); }}
                             className="text-slate-400 hover:text-slate-600 p-0.5 cursor-pointer"
                           >
                             <X className="w-3 h-3" />
@@ -1572,11 +1611,14 @@ export const CarpoolSection: React.FC<CarpoolInteractiveSectionProps> = ({
                       </div>
                       <div className="flex items-center gap-1">
                         <input 
-                          type="text" 
+                          ref={dropoffSearchInputRef}
+                          type="text"
                           value={destinationLocation}
+                          onKeyDown={handleLocationInputKeyDown}
+                          enterKeyHint="search"
                           onChange={(e) => {
                             setDestinationLocation(e.target.value);
-                            onSelectDropoffLocation?.(e.target.value);
+                            setLocationSearchError(null);
                           }}
                           className="w-full text-xs font-black text-slate-900 bg-transparent outline-none truncate"
                           placeholder="Enter destination (e.g. Hyderabad, Uppal, Mindspace)"
@@ -1584,7 +1626,7 @@ export const CarpoolSection: React.FC<CarpoolInteractiveSectionProps> = ({
                         {destinationLocation && (
                           <button
                             type="button"
-                            onClick={() => { setDestinationLocation(''); onSelectDropoffLocation?.(''); }}
+                            onClick={() => { setDestinationLocation(''); setLocationSearchError(null); }}
                             className="text-slate-400 hover:text-slate-600 p-0.5 cursor-pointer"
                           >
                             <X className="w-3 h-3" />
@@ -1603,6 +1645,9 @@ export const CarpoolSection: React.FC<CarpoolInteractiveSectionProps> = ({
                     <ArrowUpDown className="w-3.5 h-3.5" />
                   </button>
                 </div>
+                {locationSearchError && (
+                  <p role="alert" className="text-xs font-semibold text-rose-600">{locationSearchError}</p>
+                )}
 
                 {/* 4. 1-Tap Popular Corridor Trips (Instant Booking) */}
                 <div className="space-y-1.5">
@@ -1626,8 +1671,11 @@ export const CarpoolSection: React.FC<CarpoolInteractiveSectionProps> = ({
                           sounds.playSuccess();
                           setPickupLocation(trip.from);
                           setDestinationLocation(trip.to);
+                          setSearchedPickupLocation(trip.from);
+                          setSearchedDestinationLocation(trip.to);
                           onUpdatePickupLocation?.(trip.from);
                           onSelectDropoffLocation?.(trip.to);
+                          setLocationSearchError(null);
                           setCurrentScreen('AVAILABLE_RIDES');
                         }}
                         className="p-2.5 rounded-2xl bg-slate-50 hover:bg-emerald-50/80 border border-slate-200 hover:border-emerald-300 transition cursor-pointer text-left shadow-2xs group"
@@ -1664,10 +1712,8 @@ export const CarpoolSection: React.FC<CarpoolInteractiveSectionProps> = ({
 
                 {/* Primary CTA */}
                 <button
-                  onClick={() => {
-                    sounds.playSuccess();
-                    setCurrentScreen('AVAILABLE_RIDES');
-                  }}
+                  type="button"
+                  onClick={handleSearchCarpoolRides}
                   className="w-full py-3.5 bg-[#00875A] hover:bg-[#00704A] text-white rounded-2xl font-black text-sm flex items-center justify-center gap-2 shadow-md shadow-emerald-700/25 active:scale-[0.98] transition cursor-pointer"
                 >
                   <span>Search Live Carpool Rides</span>
@@ -1789,163 +1835,11 @@ export const CarpoolSection: React.FC<CarpoolInteractiveSectionProps> = ({
       {currentScreen === 'AVAILABLE_RIDES' && (
         <div className="flex-1 flex flex-col h-full bg-slate-100 relative overflow-hidden animate-in fade-in duration-150">
           
-          {/* 1. TOP FLOATING SEARCH & EDIT CARD */}
-          <div className="absolute top-3 left-3 right-3 sm:left-4 sm:right-4 z-30">
-            <div className="bg-white rounded-3xl shadow-lg border border-slate-100/90 p-3">
-              {!isInlineEditing ? (
-                /* Interactive View Mode with Edit & Swap buttons */
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex-1 space-y-1 pr-1 min-w-0">
-                    {/* Pickup Row (Clickable to edit) */}
-                    <div 
-                      onClick={() => handleOpenEditLocationsModal('PICKUP')}
-                      className="flex items-center gap-2.5 p-1 rounded-xl hover:bg-slate-50 cursor-pointer group transition select-none"
-                      title="Click to edit pickup location"
-                    >
-                      <span className="w-2.5 h-2.5 rounded-full bg-emerald-600 ring-2 ring-emerald-200 flex-shrink-0 group-hover:scale-125 transition-transform"></span>
-                      <div className="flex items-center gap-2 truncate flex-1 min-w-0">
-                        <span className="text-[11px] font-bold text-slate-500 w-14 flex-shrink-0">Pickup</span>
-                        <span className="text-xs font-black text-slate-900 truncate group-hover:text-emerald-700 transition-colors">
-                          {pickupLocation}
-                        </span>
-                      </div>
-                      <span className="text-[10px] font-bold text-slate-400 group-hover:text-emerald-600 flex items-center gap-0.5 opacity-60 group-hover:opacity-100 transition flex-shrink-0">
-                        <Pencil className="w-3 h-3" />
-                        <span className="hidden sm:inline">Edit</span>
-                      </span>
-                    </div>
-
-                    <div className="border-t border-slate-100 my-0.5 ml-5"></div>
-
-                    {/* Drop-off Row (Clickable to edit) */}
-                    <div 
-                      onClick={() => handleOpenEditLocationsModal('DROPOFF')}
-                      className="flex items-center gap-2.5 p-1 rounded-xl hover:bg-slate-50 cursor-pointer group transition select-none"
-                      title="Click to edit drop-off location"
-                    >
-                      <MapPin className="w-3.5 h-3.5 text-rose-600 fill-rose-600 flex-shrink-0 group-hover:scale-125 transition-transform" />
-                      <div className="flex items-center gap-2 truncate flex-1 min-w-0">
-                        <span className="text-[11px] font-bold text-slate-500 w-14 flex-shrink-0">Drop-off</span>
-                        <span className="text-xs font-black text-slate-900 truncate group-hover:text-rose-600 transition-colors">
-                          {destinationLocation}
-                        </span>
-                      </div>
-                      <span className="text-[10px] font-bold text-slate-400 group-hover:text-rose-600 flex items-center gap-0.5 opacity-60 group-hover:opacity-100 transition flex-shrink-0">
-                        <Pencil className="w-3 h-3" />
-                        <span className="hidden sm:inline">Edit</span>
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Actions Column */}
-                  <div className="flex items-center gap-1.5 flex-shrink-0 pl-1 border-l border-slate-100">
-                    {/* Primary Edit Button */}
-                    <button
-                      onClick={() => handleOpenEditLocationsModal('PICKUP')}
-                      className="px-2.5 py-2 rounded-2xl bg-emerald-50 hover:bg-emerald-100 text-[#00875A] border border-emerald-200/80 text-[11px] font-black flex items-center gap-1.5 transition active:scale-95 cursor-pointer shadow-2xs"
-                      title="Edit pickup and drop-off locations"
-                    >
-                      <Pencil className="w-3.5 h-3.5" />
-                      <span>Edit</span>
-                    </button>
-
-                    {/* Swap Button */}
-                    <button
-                      onClick={handleSwapLocations}
-                      className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center transition active:scale-90 shadow-2xs cursor-pointer flex-shrink-0"
-                      title="Swap pickup and drop-off"
-                    >
-                      <ArrowUpDown className="w-3.5 h-3.5 rotate-90" />
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                /* Inline Direct Edit Mode */
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between border-b border-slate-100 pb-1.5">
-                    <span className="text-[10px] font-black uppercase tracking-wider text-slate-600 flex items-center gap-1">
-                      <Pencil className="w-3 h-3 text-emerald-600" /> Quick Edit Route Locations
-                    </span>
-                    <button
-                      onClick={handleSwapLocations}
-                      className="text-[10px] font-bold text-slate-500 hover:text-slate-800 flex items-center gap-1 px-1.5 py-0.5 rounded-md hover:bg-slate-100"
-                      title="Swap pickup and drop-off"
-                    >
-                      <ArrowUpDown className="w-3 h-3" /> Swap
-                    </button>
-                  </div>
-
-                  {/* Pickup Input */}
-                  <div className="flex items-center gap-2 bg-slate-50 px-2.5 py-1.5 rounded-xl border border-slate-200 focus-within:border-emerald-500 focus-within:bg-white transition">
-                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-600 flex-shrink-0"></span>
-                    <input
-                      type="text"
-                      value={pickupLocation}
-                      onChange={(e) => {
-                        setPickupLocation(e.target.value);
-                        onUpdatePickupLocation?.(e.target.value);
-                      }}
-                      placeholder="Pickup address or stop"
-                      className="w-full text-xs font-black text-slate-900 bg-transparent outline-none truncate"
-                    />
-                    {pickupLocation && (
-                      <button 
-                        onClick={() => { setPickupLocation(''); onUpdatePickupLocation?.(''); }}
-                        className="text-slate-400 hover:text-slate-600 p-0.5"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    )}
-                  </div>
-
-                  {/* Drop-off Input */}
-                  <div className="flex items-center gap-2 bg-slate-50 px-2.5 py-1.5 rounded-xl border border-slate-200 focus-within:border-rose-500 focus-within:bg-white transition">
-                    <MapPin className="w-3 h-3 text-rose-600 fill-rose-600 flex-shrink-0" />
-                    <input
-                      type="text"
-                      value={destinationLocation}
-                      onChange={(e) => {
-                        setDestinationLocation(e.target.value);
-                        onSelectDropoffLocation?.(e.target.value);
-                      }}
-                      placeholder="Destination or intermediate stop"
-                      className="w-full text-xs font-black text-slate-900 bg-transparent outline-none truncate"
-                    />
-                    {destinationLocation && (
-                      <button 
-                        onClick={() => { setDestinationLocation(''); onSelectDropoffLocation?.(''); }}
-                        className="text-slate-400 hover:text-slate-600 p-0.5"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    )}
-                  </div>
-
-                  <div className="flex items-center justify-between pt-1">
-                    <button
-                      onClick={() => handleOpenEditLocationsModal('PICKUP')}
-                      className="text-[10px] font-bold text-emerald-700 hover:underline flex items-center gap-1"
-                    >
-                      <Sparkles className="w-3 h-3" /> Open Full Picker
-                    </button>
-                    <button
-                      onClick={() => { sounds.playSuccess(); setIsInlineEditing(false); }}
-                      className="px-3 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-black shadow-xs cursor-pointer"
-                    >
-                      Done
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* 2. REAL ROAD ROUTE MAP (Upper 52%) */}
-          <div className="h-[50%] sm:h-[53%] w-full relative overflow-hidden">
+          <div className="h-[55%] sm:h-[58%] w-full flex-shrink-0 relative overflow-hidden">
             <CarpoolCorridorMap
               driverId={selectedDriver?.id}
-              pickupAddress={pickupLocation}
-              dropoffAddress={destinationLocation}
+              pickupAddress={searchedPickupLocation}
+              dropoffAddress={searchedDestinationLocation}
               driverName={selectedDriver?.driverName || 'Ramesh Kumar'}
               driverProgress={selectedDriver?.driverProgress || 0.42}
               vehicleTier={selectedDriver?.vehicleTier || 'Cab Prime Sedan'}
@@ -1954,10 +1848,79 @@ export const CarpoolSection: React.FC<CarpoolInteractiveSectionProps> = ({
               liveSpeedKmh={selectedDriver?.liveSpeedKmh || 68}
               onRecenter={handleDetectLiveGps}
             />
+            <form
+              className="absolute left-2 right-2 top-2 z-30 space-y-1.5 rounded-2xl border border-white/80 bg-white/95 p-2 shadow-lg backdrop-blur-md sm:left-4 sm:right-4 sm:top-3 sm:p-2.5"
+              onSubmit={event => {
+                event.preventDefault();
+                handleSearchCarpoolRides();
+              }}
+            >
+              <button type="submit" className="sr-only" tabIndex={-1} aria-hidden="true">
+                Search rides
+              </button>
+              <div className="flex items-center gap-1.5">
+                <label className="flex min-w-0 flex-1 items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-2 py-1.5 focus-within:border-emerald-400">
+                  <span className="h-2 w-2 flex-shrink-0 rounded-full bg-emerald-600" />
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-[8px] font-black uppercase tracking-wider text-slate-400">Pickup</span>
+                    <input
+                      type="text"
+                      value={pickupLocation}
+                      onKeyDown={event => {
+                        if (event.key === 'Enter') {
+                          event.preventDefault();
+                          dropoffSearchInputRef.current?.focus();
+                        }
+                      }}
+                      enterKeyHint="next"
+                      onChange={event => {
+                        setPickupLocation(event.target.value);
+                        setLocationSearchError(null);
+                      }}
+                      placeholder="Pickup address"
+                      aria-label="Pickup address"
+                      className="w-full truncate bg-transparent text-[11px] font-bold text-slate-900 outline-none placeholder:text-slate-400"
+                    />
+                  </span>
+                </label>
+                <button
+                  type="button"
+                  onClick={handleSwapLocations}
+                  className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border border-slate-200 text-slate-500 transition hover:border-emerald-300 hover:text-emerald-700"
+                  title="Swap pickup and drop-off"
+                  aria-label="Swap pickup and drop-off"
+                >
+                  <ArrowUpDown className="h-3.5 w-3.5" />
+                </button>
+                <label className="flex min-w-0 flex-1 items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-2 py-1.5 focus-within:border-rose-300">
+                  <MapPin className="h-3 w-3 flex-shrink-0 text-rose-600" />
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-[8px] font-black uppercase tracking-wider text-slate-400">Drop-off</span>
+                    <input
+                      ref={dropoffSearchInputRef}
+                      type="text"
+                      value={destinationLocation}
+                      onKeyDown={handleLocationInputKeyDown}
+                      enterKeyHint="search"
+                      onChange={event => {
+                        setDestinationLocation(event.target.value);
+                        setLocationSearchError(null);
+                      }}
+                      placeholder="Destination"
+                      aria-label="Drop-off address"
+                      className="w-full truncate bg-transparent text-[11px] font-bold text-slate-900 outline-none placeholder:text-slate-400"
+                    />
+                  </span>
+                </label>
+              </div>
+              {locationSearchError && (
+                <p role="alert" className="text-[10px] font-semibold text-rose-600">{locationSearchError}</p>
+              )}
+            </form>
           </div>
 
-          {/* 3. AVAILABLE RIDES BOTTOM SHEET (Lower 48-50%) */}
-          <div className="flex-1 flex flex-col bg-white rounded-t-[2.5rem] shadow-2xl border-t border-slate-200/90 z-20 overflow-hidden -mt-5">
+          {/* AVAILABLE RIDES */}
+          <div className="min-h-0 flex-1 flex flex-col bg-white rounded-t-[2rem] shadow-2xl border-t border-slate-200/90 z-20 overflow-hidden">
             {/* Grab Handle */}
             <div className="w-12 h-1 bg-slate-300 rounded-full mx-auto mt-2.5 mb-1 flex-shrink-0"></div>
 
@@ -1983,10 +1946,10 @@ export const CarpoolSection: React.FC<CarpoolInteractiveSectionProps> = ({
 
             {/* Real-time Mismatch Alert Banner (if pickup = rider destination) */}
             {Boolean(
-              (pickupLocation.toLowerCase().trim().includes('hyderabad central') && destinationLocation.toLowerCase().trim().includes('hyderabad central')) ||
+              (searchedPickupLocation.toLowerCase().trim().includes('hyderabad central') && searchedDestinationLocation.toLowerCase().trim().includes('hyderabad central')) ||
               (selectedDriver && (
-                pickupLocation.toLowerCase().trim() === selectedDriver.to.toLowerCase().trim() ||
-                pickupLocation.toLowerCase().trim().includes(selectedDriver.to.toLowerCase().trim())
+                searchedPickupLocation.toLowerCase().trim() === selectedDriver.to.toLowerCase().trim() ||
+                searchedPickupLocation.toLowerCase().trim().includes(selectedDriver.to.toLowerCase().trim())
               ))
             ) && (
               <div className="mx-4 mt-2 p-3 bg-rose-50 border border-rose-300 rounded-2xl flex items-start gap-2.5 text-xs text-rose-950 shadow-2xs">
@@ -2013,13 +1976,9 @@ export const CarpoolSection: React.FC<CarpoolInteractiveSectionProps> = ({
               {displayedDrivers.map(driver => {
                 const match = driver.match;
                 const isBestMatch = driver.id === 'pool-ramesh' || match.compatibilityScore >= 90;
-
-                // Dynamic origin, boarding, and destination stop names
                 const originName = driver.corridorStops[0]?.name || driver.from;
-                const boardName = pickupLocation.split(',')[0] || driver.corridorStops[1]?.name || 'Hanamkonda';
-                const destName = (destinationLocation.includes('Hyderabad') ? 'Hyderabad' : destinationLocation.split(' ')[0]) || driver.to;
-
                 const isSelected = selectedDriverId === driver.id;
+                const availableSeats = match.remainingSeats || driver.availableSeatsCount;
 
                 return (
                   <div
@@ -2029,157 +1988,134 @@ export const CarpoolSection: React.FC<CarpoolInteractiveSectionProps> = ({
                       setSelectedDriverId(driver.id);
                       setSelectedDropPointId(match.dropoffStop.id);
                     }}
-                    className={`bg-white rounded-3xl p-4 border transition cursor-pointer relative overflow-hidden ${
-                      isSelected 
-                        ? 'border-emerald-500 ring-2 ring-emerald-500/30 shadow-md bg-emerald-50/15' 
-                        : 'border-slate-200/90 shadow-sm hover:border-slate-300 hover:shadow-md'
+                    className={`bg-white rounded-3xl p-3.5 sm:p-4 border transition cursor-pointer relative overflow-hidden ${
+                      isSelected
+                        ? 'border-emerald-500 ring-2 ring-emerald-500/25 shadow-lg bg-emerald-50/20'
+                        : 'border-slate-200 shadow-sm hover:border-slate-300 hover:shadow-md'
                     }`}
                   >
-                    {/* Top Row: Driver Avatar, Info, and Status Badge */}
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex items-center gap-3">
-                        {/* Avatar with green active badge overlay */}
-                        <div className="relative flex-shrink-0">
-                          <img 
-                            src={driver.driverAvatar} 
-                            alt={driver.driverName}
-                            className="w-12 h-12 rounded-full object-cover ring-2 ring-slate-100 shadow-xs"
-                          />
-                          <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-emerald-500 ring-2 ring-white"></div>
+                    <div className="space-y-3">
+                      <div className="flex items-start justify-between gap-2.5">
+                        <div className="flex min-w-0 items-center gap-3">
+                          <div className="relative flex-shrink-0">
+                            <img
+                              src={driver.driverAvatar}
+                              alt={driver.driverName}
+                              className="w-12 h-12 rounded-2xl object-cover ring-2 ring-slate-100 shadow-xs"
+                            />
+                            <span className="absolute -right-1 -bottom-1 w-3.5 h-3.5 rounded-full bg-emerald-500 ring-2 ring-white"></span>
+                          </div>
+
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className="font-extrabold text-sm sm:text-base text-slate-900">{driver.driverName}</span>
+                              <span className="inline-flex items-center gap-1 text-xs font-bold text-slate-700">
+                                <Star className="w-3.5 h-3.5 fill-amber-400 stroke-none text-amber-400" />
+                                {driver.driverRating}
+                                <span className="text-slate-400 font-normal">({driver.totalTrips})</span>
+                              </span>
+                            </div>
+                            <div className="text-xs text-slate-600 font-semibold mt-0.5 truncate">{driver.vehicle}</div>
+                            <div className="text-[10px] text-slate-400 font-mono mt-0.5">{driver.vehiclePlate}</div>
+                          </div>
                         </div>
 
-                        <div>
-                          <div className="flex items-center gap-1.5 flex-wrap">
-                            <span className="font-extrabold text-sm sm:text-base text-slate-900">{driver.driverName}</span>
-                            <span className="flex items-center gap-1 text-xs font-bold text-slate-800">
-                              <Star className="w-3.5 h-3.5 fill-amber-400 stroke-none text-amber-400" />
-                              <span>{driver.driverRating}</span>
-                              <span className="text-slate-500 font-normal">({driver.totalTrips} rides)</span>
-                            </span>
-                          </div>
-                          <div className="text-xs text-slate-500 font-medium mt-0.5">
-                            {driver.vehicle}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Best Match or Showing on Map Badge */}
-                      <div className="flex items-center gap-1.5 flex-shrink-0">
+                        <div className="flex flex-col items-end gap-1 flex-shrink-0">
                         {isSelected && (
-                          <span className="px-2.5 py-1 rounded-full bg-emerald-600 text-white text-[10px] font-black flex items-center gap-1 shadow-xs animate-in fade-in">
-                            <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />
-                            <span>Showing on Map</span>
+                          <span className="px-2 py-1 rounded-full bg-emerald-600 text-white text-[9px] font-black shadow-xs">
+                            On map
                           </span>
                         )}
                         {isBestMatch && !isSelected && (
-                          <span className="px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-black flex items-center gap-1 flex-shrink-0">
-                            <Zap className="w-3.5 h-3.5 fill-emerald-700 text-emerald-700" />
-                            <span>Best Match</span>
+                          <span className="px-2 py-1 rounded-full bg-emerald-50 text-emerald-800 text-[9px] font-black flex items-center gap-1">
+                            <Zap className="w-3 h-3 fill-emerald-700 text-emerald-700" />
+                            Best match
                           </span>
                         )}
-                        {!isBestMatch && !isSelected && (
-                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black text-slate-600 bg-slate-100 flex-shrink-0">
+                        {!isBestMatch && !isSelected && match.matchTitle !== 'Pickup at Rider Destination' && (
+                          <span className="max-w-28 px-2 py-1 rounded-full text-[9px] font-black text-slate-600 bg-slate-100 text-right">
                             {match.matchTitle}
                           </span>
                         )}
-                      </div>
-                    </div>
-
-                    {/* Middle Row: Corridor Flow Container (Soft Blue Box Matching Screenshot) */}
-                    <div className="bg-[#EFF6FF] border border-blue-100/90 rounded-2xl p-3 flex items-center justify-between text-xs">
-                      {/* Origin */}
-                      <div className="flex items-center gap-1.5 min-w-0">
-                        <MapPin className="w-4 h-4 text-emerald-600 fill-emerald-600 flex-shrink-0" />
-                        <div className="truncate">
-                          <div className="font-black text-slate-900 text-xs leading-tight truncate">{originName}</div>
-                          <div className="text-[10px] font-bold text-emerald-600 leading-tight">(Starts Here)</div>
                         </div>
                       </div>
 
-                      <ArrowRight className="w-3.5 h-3.5 text-slate-400 flex-shrink-0 mx-1" />
-
-                      {/* Pickup / Boarding */}
-                      <div className="flex items-center gap-1.5 min-w-0">
-                        <MapPin className="w-4 h-4 text-blue-600 fill-blue-600 flex-shrink-0" />
-                        <div className="truncate">
-                          <div className="font-black text-slate-900 text-xs leading-tight truncate">{boardName}</div>
-                          <div className="text-[10px] font-bold text-blue-600 leading-tight">(You Board)</div>
-                        </div>
-                      </div>
-
-                      <ArrowRight className="w-3.5 h-3.5 text-slate-400 flex-shrink-0 mx-1" />
-
-                      {/* Destination */}
-                      <div className="flex items-center gap-1.5 min-w-0">
-                        <MapPin className="w-4 h-4 text-rose-500 fill-rose-500 flex-shrink-0" />
-                        <div className="truncate">
-                          <div className="font-black text-slate-900 text-xs leading-tight truncate">{destName}</div>
-                          <div className="text-[10px] font-bold text-slate-600 leading-tight">(Central)</div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Bottom Row: 4 Metrics & Book Ride Button */}
-                    <div className="flex items-center justify-between pt-1 gap-2">
-                      <div className="grid grid-cols-4 gap-2 text-left flex-1 min-w-0">
-                        {/* Pickup ETA */}
-                        <div className="space-y-0.5">
-                          <div className="flex items-center gap-1 text-[10px] text-slate-500 font-semibold truncate">
-                            <Clock className="w-3 h-3 text-slate-400 flex-shrink-0" />
-                            <span className="truncate">Pickup ETA</span>
+                      <div className="rounded-2xl bg-slate-50 border border-slate-100 px-3 py-2.5">
+                        <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+                          <div className="min-w-0">
+                            <div className="text-[9px] font-black uppercase tracking-wider text-slate-400">From</div>
+                            <div className="text-xs font-extrabold text-slate-800 truncate" title={originName}>{originName}</div>
                           </div>
-                          <div className="font-black text-xs sm:text-sm text-slate-900 truncate">
-                            {driver.id === 'pool-ramesh' ? '7 min' : `${match.scenario.midRoutePickupEtaMin || 15} min`}
+                          <ArrowRight className="w-4 h-4 text-emerald-600" />
+                          <div className="min-w-0 text-right">
+                            <div className="text-[9px] font-black uppercase tracking-wider text-rose-500">To</div>
+                            <div className="text-xs font-extrabold text-slate-800 truncate" title={match.dropoffStop.name}>{match.dropoffStop.name}</div>
                           </div>
                         </div>
-
-                        {/* Journey Time */}
-                        <div className="space-y-0.5">
-                          <div className="flex items-center gap-1 text-[10px] text-slate-500 font-semibold truncate">
-                            <Car className="w-3 h-3 text-slate-400 flex-shrink-0" />
-                            <span className="truncate">Journey Time</span>
-                          </div>
-                          <div className="font-black text-xs sm:text-sm text-slate-900 truncate">
-                            {driver.id === 'pool-ramesh' ? '1 hr 25 min' : '1 hr 40 min'}
-                          </div>
-                        </div>
-
-                        {/* Fare */}
-                        <div className="space-y-0.5">
-                          <div className="flex items-center gap-1 text-[10px] text-slate-500 font-semibold truncate">
-                            <span className="text-[10px] font-bold text-slate-400">₹</span>
-                            <span className="truncate">Fare</span>
-                          </div>
-                          <div className="font-black text-xs sm:text-sm text-slate-900 truncate">
-                            ₹ {driver.id === 'pool-ramesh' ? '180' : (match.calculatedFare || driver.basePricePerSeat)}
-                          </div>
-                        </div>
-
-                        {/* Available Seats */}
-                        <div className="space-y-0.5">
-                          <div className="flex items-center gap-1 text-[10px] text-slate-500 font-semibold truncate">
-                            <Users className="w-3 h-3 text-slate-400 flex-shrink-0" />
-                            <span className="truncate">Available</span>
-                          </div>
-                          <div className="font-black text-xs sm:text-sm text-slate-900 truncate">
-                            {driver.id === 'pool-ramesh' ? '3 Seats' : `${match.remainingSeats || driver.availableSeatsCount} Seats`}
+                        <div className="mt-2 pt-2 border-t border-slate-200/80 flex items-start gap-2 min-w-0">
+                          <MapPin className="w-3.5 h-3.5 text-blue-600 fill-blue-600 flex-shrink-0 mt-0.5" />
+                          <div className="min-w-0">
+                            <span className="text-[9px] font-black uppercase tracking-wider text-blue-600">Pickup · </span>
+                            <span className="text-[11px] font-bold text-slate-700 break-words">{match.pickupStop.name}</span>
                           </div>
                         </div>
                       </div>
 
-                      {/* Book Ride Button */}
-                      <button
-                        onClick={() => {
-                          sounds.playSuccess();
-                          setSelectedDriverId(driver.id);
-                          setSelectedDropPointId(match.dropoffStop.id);
-                          setCurrentScreen('RIDE_DETAILS');
-                        }}
-                        className="px-5 py-2.5 bg-[#00875A] hover:bg-[#007048] text-white font-black text-xs sm:text-sm rounded-2xl flex items-center gap-1.5 shadow-md shadow-emerald-700/20 active:scale-95 transition flex-shrink-0 cursor-pointer"
-                      >
-                        <span>Book Ride</span>
-                        <ArrowRight className="w-3.5 h-3.5 stroke-[2.5]" />
-                      </button>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                        <div className="rounded-xl bg-blue-50/80 border border-blue-100 px-2.5 py-2 min-w-0">
+                          <div className="flex items-center gap-1 text-[9px] text-slate-500 font-bold">
+                            <Clock className="w-3 h-3 text-blue-500 flex-shrink-0" />
+                            <span>Pickup ETA</span>
+                          </div>
+                          <div className="mt-0.5 font-black text-xs text-slate-900">{match.scenario.midRoutePickupEtaMin || 15} min</div>
+                        </div>
+                        <div className="rounded-xl bg-slate-50 border border-slate-100 px-2.5 py-2 min-w-0">
+                          <div className="flex items-center gap-1 text-[9px] text-slate-500 font-bold">
+                            <MapPin className="w-3 h-3 text-slate-500 flex-shrink-0" />
+                            <span>Trip distance</span>
+                          </div>
+                          <div className="mt-0.5 font-black text-xs text-slate-900">~{match.tripDistanceKm.toFixed(0)} km</div>
+                        </div>
+                        <div className="rounded-xl bg-emerald-50 border border-emerald-100 px-2.5 py-2 min-w-0">
+                          <div className="text-[9px] text-emerald-700 font-bold">Seat fare</div>
+                          <div className="mt-0.5 font-black text-sm text-slate-900">₹{match.calculatedFare}</div>
+                          <div className="text-[9px] text-slate-500">per seat</div>
+                        </div>
+                        <div className="rounded-xl bg-slate-50 border border-slate-100 px-2.5 py-2 min-w-0">
+                          <div className="flex items-center gap-1 text-[9px] text-slate-500 font-bold">
+                            <Users className="w-3 h-3 text-slate-500 flex-shrink-0" />
+                            <span>Seats left</span>
+                          </div>
+                          <div className="mt-0.5 font-black text-xs text-slate-900">{availableSeats} seats</div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-100">
+                        <div className="min-w-0 flex items-center gap-1.5 text-[10px] font-semibold text-slate-500">
+                          <span className="truncate">Departs in {driver.departsIn}</span>
+                          {driver.verified && (
+                            <span className="inline-flex items-center gap-0.5 text-emerald-700 flex-shrink-0">
+                              <ShieldCheck className="w-3 h-3" />
+                              Verified
+                            </span>
+                          )}
+                          {driver.hasAC && <span className="text-slate-500 flex-shrink-0">· AC</span>}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            sounds.playSuccess();
+                            setSelectedDriverId(driver.id);
+                            setSelectedDropPointId(match.dropoffStop.id);
+                            setCurrentScreen('RIDE_DETAILS');
+                          }}
+                          className="px-3.5 py-2 bg-[#00875A] hover:bg-[#007048] text-white font-black text-xs rounded-xl flex items-center gap-1.5 shadow-sm active:scale-95 transition flex-shrink-0"
+                        >
+                          Book ride
+                          <ArrowRight className="w-3.5 h-3.5 stroke-[2.5]" />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 );
@@ -2405,11 +2341,11 @@ export const CarpoolSection: React.FC<CarpoolInteractiveSectionProps> = ({
             <button
               onClick={() => {
                 sounds.playPop();
-                setCurrentScreen('SELECT_DROP');
+                setCurrentScreen('BOOKING_SUMMARY');
               }}
               className="w-full py-4 bg-[#00875A] hover:bg-[#00704A] text-white rounded-2xl font-black text-sm flex items-center justify-center gap-2 shadow-md shadow-emerald-700/25 active:scale-[0.98] transition cursor-pointer"
             >
-              <span>Confirm Drop Point & Continue</span>
+              <span>Continue to Booking</span>
               <ArrowRight className="w-4 h-4" />
             </button>
 
@@ -2419,168 +2355,7 @@ export const CarpoolSection: React.FC<CarpoolInteractiveSectionProps> = ({
       )}
 
       {/* =========================================================================
-          SCREEN 4: FLEXIBLE INTERMEDIATE DROP POINT SELECTION
-         ========================================================================= */}
-      {currentScreen === 'SELECT_DROP' && (
-        <div className="flex-1 flex flex-col h-full bg-slate-50 relative overflow-hidden animate-in fade-in duration-150">
-          
-          {/* Header */}
-          <div className="px-5 py-3 bg-white border-b border-slate-100 flex items-center justify-between z-20 shadow-xs">
-            <button 
-              onClick={() => { sounds.playTap(); setCurrentScreen('RIDE_DETAILS'); }}
-              className="p-1.5 rounded-xl hover:bg-slate-100 text-slate-700 transition"
-            >
-              <ChevronLeft className="w-6 h-6 stroke-[2.2]" />
-            </button>
-
-            <span className="text-base font-black text-slate-900">Select Drop Point</span>
-
-            <div className="w-6"></div>
-          </div>
-
-          {/* Driver Summary */}
-          <div className="px-4 py-2.5 bg-white border-b border-slate-100 z-20 space-y-2">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <img 
-                  src={activeDriver.driverAvatar} 
-                  alt={activeDriver.driverName}
-                  className="w-8 h-8 rounded-full object-cover ring-2 ring-slate-100 shadow-xs"
-                />
-                <div>
-                  <span className="font-black text-xs text-slate-900">{activeDriver.driverName}</span>
-                  <span className="text-[11px] text-amber-500 font-bold ml-1.5">★ {activeDriver.driverRating}</span>
-                </div>
-              </div>
-
-              <div className="text-right">
-                <span className="text-xs font-black text-slate-900">₹ {dynamicSelectedFare}</span>
-                <span className="text-[9px] text-slate-400 block">per seat</span>
-              </div>
-            </div>
-
-            <div className="p-2.5 bg-blue-50/90 rounded-2xl text-[11px] text-blue-900 font-medium border border-blue-200/50">
-              Driver travels along the highway corridor. Choose your preferred intermediate drop-off point below:
-            </div>
-          </div>
-
-          {/* Interactive Map Visual */}
-          <div className="flex-1 relative bg-[#EBF4F6] overflow-hidden min-h-[160px]">
-            <svg className="w-full h-full" viewBox="0 0 400 240" preserveAspectRatio="none">
-              <path d="M 0 120 L 400 120" stroke="#FFFFFF" strokeWidth="8" />
-              <path d="M 200 0 L 200 240" stroke="#FFFFFF" strokeWidth="8" />
-              <path d="M 60 200 Q 180 140 320 50" stroke="#00875A" strokeWidth="6" fill="none" strokeLinecap="round" />
-              <circle cx="320" cy="50" r="7" fill="#10B981" stroke="#FFFFFF" strokeWidth="2" />
-              <circle cx="250" cy="85" r="6" fill="#0284C7" stroke="#FFFFFF" strokeWidth="2" />
-              <circle cx="180" cy="125" r="5" fill="#10B981" stroke="#FFFFFF" strokeWidth="1.5" />
-              <circle cx="120" cy="160" r="6" fill="#0284C7" stroke="#FFFFFF" strokeWidth="2" />
-              <circle cx="60" cy="200" r="7" fill="#EF4444" stroke="#FFFFFF" strokeWidth="2" />
-            </svg>
-
-            {/* Selected Stop Pin Marker */}
-            <div className="absolute top-16 left-32 z-20 flex flex-col items-center animate-bounce">
-              <div className="px-3 py-1 bg-slate-900 text-white text-[10px] font-black rounded-xl shadow-xl">
-                Drop: {activeSelectedDropStop.name}
-              </div>
-              <div className="w-2.5 h-2.5 bg-slate-900 rotate-45 -mt-1"></div>
-            </div>
-          </div>
-
-          {/* Bottom Sheet Drawer */}
-          <div className="bg-white rounded-t-3xl p-4.5 border-t border-slate-200 shadow-2xl space-y-3 z-30 max-h-[50%] overflow-y-auto no-scrollbar">
-            <div className="w-10 h-1 bg-slate-200 rounded-full mx-auto -mt-1.5 mb-1.5"></div>
-
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-black text-slate-900">
-                Approved Drop-off Points
-              </span>
-              <span className="text-[10px] text-slate-400 font-bold">
-                Legally Verified Bays
-              </span>
-            </div>
-
-            <div className="space-y-2">
-              {activeDriver.corridorStops
-                .filter(stop => stop.order > activeMatch.pickupStop.order)
-                .map((stop) => {
-                  const isSelected = activeSelectedDropStop.id === stop.id;
-
-                  return (
-                    <div
-                      key={stop.id}
-                      onClick={() => {
-                        sounds.playTap();
-                        setSelectedDropPointId(stop.id);
-                        onSelectDropoffLocation?.(stop.name);
-                      }}
-                      className={`p-3 rounded-2xl border text-xs flex items-center justify-between cursor-pointer transition ${
-                        isSelected
-                          ? 'bg-emerald-50/90 border-emerald-500 shadow-xs ring-2 ring-emerald-200'
-                          : 'bg-white border-slate-200 hover:border-slate-300'
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
-                          isSelected 
-                            ? 'border-emerald-600 bg-emerald-600' 
-                            : 'border-slate-300'
-                        }`}>
-                          {isSelected && <span className="w-1.5 h-1.5 rounded-full bg-white"></span>}
-                        </div>
-
-                        <div>
-                          <div className="flex items-center gap-1.5">
-                            <span className={`font-bold ${isSelected ? 'text-slate-900 font-black' : 'text-slate-700'}`}>
-                              {stop.name}
-                            </span>
-                            {stop.order === activeDriver.corridorStops[activeDriver.corridorStops.length - 1].order ? (
-                              <span className="text-[9px] bg-emerald-50 text-emerald-700 px-1.5 py-0.2 rounded font-black">
-                                Terminal End
-                              </span>
-                            ) : destinationLocation.toLowerCase().includes(stop.name.toLowerCase()) || stop.name.toLowerCase().includes(destinationLocation.toLowerCase()) ? (
-                              <span className="text-[9px] bg-teal-50 text-teal-700 px-1.5 py-0.2 rounded font-black">
-                                S4: Frees Up Seat
-                              </span>
-                            ) : (
-                              <span className="text-[9px] bg-amber-50 text-amber-700 px-1.5 py-0.2 rounded font-black">
-                                S5: Best Alt Stop
-                              </span>
-                            )}
-                          </div>
-                          {stop.legalStopType && (
-                            <div className="text-[9px] text-slate-400 font-medium">
-                              {stop.legalStopType}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="text-right">
-                        <span className="text-[11px] text-slate-700 font-black block">{stop.eta}</span>
-                        <span className="text-[10px] font-bold text-emerald-700">₹ {dynamicSelectedFare}</span>
-                      </div>
-                    </div>
-                  );
-                })}
-            </div>
-
-            {/* Action Button */}
-            <button
-              onClick={() => {
-                sounds.playSuccess();
-                setCurrentScreen('BOOKING_SUMMARY');
-              }}
-              className="w-full mt-2 py-3.5 bg-[#00875A] hover:bg-[#00704A] text-white rounded-2xl font-black text-sm flex items-center justify-center gap-2 shadow-md shadow-emerald-700/25 active:scale-[0.98] transition cursor-pointer"
-            >
-              <span>Continue with {activeSelectedDropStop.name}</span>
-            </button>
-          </div>
-
-        </div>
-      )}
-
-      {/* =========================================================================
-          SCREEN 5: BOOKING SUMMARY & PAYMENT
+          SCREEN 4: BOOKING SUMMARY & PAYMENT
          ========================================================================= */}
       {currentScreen === 'BOOKING_SUMMARY' && (
         <div className="flex-1 flex flex-col h-full bg-slate-50 relative overflow-hidden animate-in fade-in duration-150">
@@ -2588,7 +2363,7 @@ export const CarpoolSection: React.FC<CarpoolInteractiveSectionProps> = ({
           {/* Header */}
           <div className="px-5 py-3 bg-white border-b border-slate-100 flex items-center justify-between z-20 shadow-xs">
             <button 
-              onClick={() => { sounds.playTap(); setCurrentScreen('SELECT_DROP'); }}
+              onClick={() => { sounds.playTap(); setCurrentScreen('RIDE_DETAILS'); }}
               className="p-1.5 rounded-xl hover:bg-slate-100 text-slate-700 transition"
             >
               <ChevronLeft className="w-6 h-6 stroke-[2.2]" />
@@ -2766,7 +2541,7 @@ export const CarpoolSection: React.FC<CarpoolInteractiveSectionProps> = ({
       )}
 
       {/* =========================================================================
-          SCREEN 6: REAL-TIME TRACKING COCKPIT (LIVE VEHICLE & TELEMETRY)
+          SCREEN 5: REAL-TIME TRACKING COCKPIT (LIVE VEHICLE & TELEMETRY)
          ========================================================================= */}
       {currentScreen === 'LIVE_COCKPIT' && (
         <div className="flex-1 flex flex-col h-full bg-slate-50 relative overflow-hidden animate-in fade-in duration-150">
@@ -2779,10 +2554,10 @@ export const CarpoolSection: React.FC<CarpoolInteractiveSectionProps> = ({
             </div>
 
             <button 
-              onClick={() => { sounds.playTap(); setCurrentScreen('HOME'); }}
+              onClick={() => { sounds.playTap(); setCurrentScreen('AVAILABLE_RIDES'); }}
               className="text-xs font-bold text-slate-600 hover:text-slate-900 bg-slate-100 px-3 py-1.5 rounded-xl transition"
             >
-              Minimize
+              Back to rides
             </button>
           </div>
 

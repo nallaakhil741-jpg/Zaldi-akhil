@@ -611,6 +611,7 @@ export interface RouteMatchAnalysis {
   recommendedIntermediateDropoff?: CarpoolRouteStop;
   availableIntermediateDropoffs: CarpoolRouteStop[];
   estimatedArrivalMin: number;
+  tripDistanceKm: number;
   calculatedFare: number;
   remainingSeats: number;
   availableSeats?: number;
@@ -621,6 +622,41 @@ export interface RouteMatchAnalysis {
   unmatchedReason?: string;
   pickupDoesNotMatchRiderDestination?: boolean;
   destinationMatchesRiderDestination?: boolean;
+}
+
+function getRouteStopDistancesKm(stops: CarpoolRouteStop[]): number[] {
+  if (stops.every(stop => Number.isFinite(stop.distanceFromOriginKm))) {
+    return stops.map(stop => stop.distanceFromOriginKm!);
+  }
+
+  const cumulativeCanvasDistances = [0];
+  for (let index = 1; index < stops.length; index++) {
+    const previous = stops[index - 1].location;
+    const current = stops[index].location;
+    cumulativeCanvasDistances.push(
+      cumulativeCanvasDistances[index - 1] + Math.hypot(current.x - previous.x, current.y - previous.y)
+    );
+  }
+
+  const totalCanvasDistance = cumulativeCanvasDistances[cumulativeCanvasDistances.length - 1] || 1;
+  const estimatedRouteDistanceKm = stops[stops.length - 1]?.distanceFromOriginKm || 145;
+  return cumulativeCanvasDistances.map(distance => +(distance / totalCanvasDistance * estimatedRouteDistanceKm).toFixed(1));
+}
+
+function getTripDistanceKm(
+  stops: CarpoolRouteStop[],
+  pickupStop: CarpoolRouteStop,
+  dropoffStop: CarpoolRouteStop
+): { tripDistanceKm: number; routeDistanceKm: number } {
+  const distances = getRouteStopDistancesKm(stops);
+  const pickupIndex = stops.findIndex(stop => stop.id === pickupStop.id);
+  const dropoffIndex = stops.findIndex(stop => stop.id === dropoffStop.id);
+  const routeDistanceKm = distances[distances.length - 1] || 145;
+  const tripDistanceKm = pickupIndex >= 0 && dropoffIndex >= pickupIndex
+    ? Math.max(0, distances[dropoffIndex] - distances[pickupIndex])
+    : 0;
+
+  return { tripDistanceKm, routeDistanceKm };
 }
 
 /**
@@ -823,13 +859,12 @@ export function matchDriverRouteToPassenger(
     }
   }
 
-  // 4. Calculate dynamic fare for selected segments
-  const totalCorridorSegments = Math.max(1, sortedStops.length - 1);
+  // 4. Calculate fare from the selected pickup-to-drop-off route distance
   const journeySegments = Math.max(1, bestDropoffStop.order - bestPickupStop.order);
-  const segmentRatio = journeySegments / totalCorridorSegments;
+  const { tripDistanceKm, routeDistanceKm } = getTripDistanceKm(sortedStops, bestPickupStop, bestDropoffStop);
   const calculatedFare = matchType === 'NO_MATCH' 
     ? driver.basePricePerSeat 
-    : Math.round(Math.max(50, driver.basePricePerSeat * Math.min(1, 0.45 + segmentRatio * 0.55)));
+    : Math.round(Math.max(50, driver.basePricePerSeat * Math.min(1, tripDistanceKm / routeDistanceKm)));
 
   // 5. Seat capacities along selected sub-trip
   const segOccupancy = calculateSegmentSeatCapacities(sortedStops, driver.totalSeats, bookings);
@@ -1045,6 +1080,7 @@ export function matchDriverRouteToPassenger(
     recommendedIntermediateDropoff: isPartialRoute ? bestDropoffStop : undefined,
     availableIntermediateDropoffs: validStops,
     estimatedArrivalMin,
+    tripDistanceKm: matchType === 'NO_MATCH' ? routeDistanceKm : tripDistanceKm,
     calculatedFare,
     remainingSeats,
     availableSeats: remainingSeats,
@@ -1083,10 +1119,9 @@ export function recalculateMatchForSelectedStop(
   const terminalStop = sortedStops[sortedStops.length - 1];
   const pickupStop = originalMatch.pickupStop;
 
-  const totalCorridorSegments = Math.max(1, sortedStops.length - 1);
   const journeySegments = Math.max(1, selectedStop.order - pickupStop.order);
-  const segmentRatio = journeySegments / totalCorridorSegments;
-  const recalculatedFare = Math.round(Math.max(50, driver.basePricePerSeat * Math.min(1, 0.45 + segmentRatio * 0.55)));
+  const { tripDistanceKm, routeDistanceKm } = getTripDistanceKm(sortedStops, pickupStop, selectedStop);
+  const recalculatedFare = Math.round(Math.max(50, driver.basePricePerSeat * Math.min(1, tripDistanceKm / routeDistanceKm)));
   const estimatedArrivalMin = Math.round(10 + journeySegments * 18);
 
   const isTerminalSelected = selectedStop.id === terminalStop.id;
@@ -1184,6 +1219,7 @@ export function recalculateMatchForSelectedStop(
     matchType,
     dropoffStop: selectedStop,
     calculatedFare: recalculatedFare,
+    tripDistanceKm,
     estimatedArrivalMin,
     scenario,
     applicableScenarios: applicableScenarios.length > 0 ? applicableScenarios : originalMatch.applicableScenarios,

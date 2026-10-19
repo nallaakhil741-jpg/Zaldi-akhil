@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Check, Crosshair, MapPin } from 'lucide-react';
+import { Crosshair, MapPin } from 'lucide-react';
 import { sounds } from '../services/audio';
 import { renderVectorVehicleSvg, getVehicleTheme } from './Vehicle5dIcon';
 
@@ -32,6 +32,85 @@ export const CarpoolCorridorMap: React.FC<CarpoolCorridorMapProps> = ({
   const [carAnimProgress, setCarAnimProgress] = useState(driverProgress);
   const lastDriverKeyRef = useRef<string>(driverId || driverName);
   const [hasRecentlyChangedDriver, setHasRecentlyChangedDriver] = useState(false);
+  const [mapZoom, setMapZoom] = useState(1);
+  const touchDistanceRef = useRef<number | null>(null);
+  const isPinchingRef = useRef(false);
+  const lastTapRef = useRef<{ time: number; x: number; y: number } | null>(null);
+  const tapStartRef = useRef<{ x: number; y: number } | null>(null);
+
+  const handleTouchStart = (event: React.TouchEvent<HTMLDivElement>) => {
+    if ((event.target as HTMLElement).closest('button')) return;
+
+    if (event.touches.length === 2) {
+      const [first, second] = Array.from(event.touches);
+      touchDistanceRef.current = Math.hypot(first.clientX - second.clientX, first.clientY - second.clientY);
+      isPinchingRef.current = true;
+      lastTapRef.current = null;
+      tapStartRef.current = null;
+    } else if (event.touches.length === 1) {
+      const touch = event.touches[0];
+      tapStartRef.current = { x: touch.clientX, y: touch.clientY };
+    } else {
+      tapStartRef.current = null;
+    }
+  };
+
+  const handleTouchMove = (event: React.TouchEvent<HTMLDivElement>) => {
+    const previousDistance = touchDistanceRef.current;
+    if (event.touches.length === 2 && previousDistance !== null && previousDistance > 0) {
+      const [first, second] = Array.from(event.touches);
+      const distance = Math.hypot(first.clientX - second.clientX, first.clientY - second.clientY);
+      if (distance > 0) {
+        setMapZoom(currentZoom => Math.max(1, Math.min(3, currentZoom * distance / previousDistance)));
+        touchDistanceRef.current = distance;
+      }
+      return;
+    }
+
+    if (event.touches.length === 1 && tapStartRef.current) {
+      const touch = event.touches[0];
+      if (Math.hypot(touch.clientX - tapStartRef.current.x, touch.clientY - tapStartRef.current.y) > 12) {
+        tapStartRef.current = null;
+      }
+    }
+  };
+
+  const handleTouchEnd = (event: React.TouchEvent<HTMLDivElement>) => {
+    if (event.touches.length > 0) return;
+
+    touchDistanceRef.current = null;
+    if (isPinchingRef.current) {
+      isPinchingRef.current = false;
+      lastTapRef.current = null;
+      tapStartRef.current = null;
+      return;
+    }
+
+    const tapStart = tapStartRef.current;
+    tapStartRef.current = null;
+    if (!tapStart || (event.target as HTMLElement).closest('button')) return;
+
+    const now = Date.now();
+    const previousTap = lastTapRef.current;
+    if (
+      previousTap &&
+      now - previousTap.time <= 300 &&
+      Math.hypot(tapStart.x - previousTap.x, tapStart.y - previousTap.y) <= 24
+    ) {
+      setMapZoom(currentZoom => Math.min(3, currentZoom * 1.5));
+      lastTapRef.current = null;
+      return;
+    }
+
+    lastTapRef.current = { ...tapStart, time: now };
+  };
+
+  const handleTouchCancel = () => {
+    touchDistanceRef.current = null;
+    isPinchingRef.current = false;
+    lastTapRef.current = null;
+    tapStartRef.current = null;
+  };
 
   // Immediately jump to the selected driver's live current car location whenever rider selection changes
   useEffect(() => {
@@ -49,13 +128,32 @@ export const CarpoolCorridorMap: React.FC<CarpoolCorridorMapProps> = ({
 
   // Smooth forward highway travel progression - strictly forward, zero reverse motion
   useEffect(() => {
-    const interval = setInterval(() => {
-      setCarAnimProgress(prev => {
-        const next = prev + 0.0016;
-        return next > 0.94 ? 0.08 : next;
-      });
-    }, 100);
-    return () => clearInterval(interval);
+    let interval: ReturnType<typeof setInterval> | null = null;
+    const startAnimation = () => {
+      if (!interval && !document.hidden) {
+        interval = setInterval(() => {
+          setCarAnimProgress(prev => {
+            const next = prev + 0.008;
+            return next > 0.94 ? 0.08 : next;
+          });
+        }, 500);
+      }
+    };
+    const stopAnimation = () => {
+      if (interval) clearInterval(interval);
+      interval = null;
+    };
+    const handleVisibilityChange = () => {
+      if (document.hidden) stopAnimation();
+      else startAnimation();
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    startAnimation();
+    return () => {
+      stopAnimation();
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, []);
 
   // Road waypoints definition in SVG coordinates (viewBox 0 0 1000 500)
@@ -101,7 +199,18 @@ export const CarpoolCorridorMap: React.FC<CarpoolCorridorMapProps> = ({
   const vehicleTheme = getVehicleTheme(vehicleTier);
 
   return (
-    <div className="relative w-full h-full overflow-hidden select-none bg-[#F3F4EE]">
+    <div
+      className="relative w-full h-full overflow-hidden select-none bg-[#F3F4EE]"
+      style={{ touchAction: 'none' }}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      onTouchCancel={handleTouchCancel}
+    >
+      <div
+        className="absolute inset-0"
+        style={{ transform: `scale(${mapZoom})`, transformOrigin: 'center' }}
+      >
       {/* -----------------------------------------------------------------
           1. REALISTIC TOPOGRAPHIC MAP CANVAS & ROADS
          ----------------------------------------------------------------- */}
@@ -365,23 +474,10 @@ export const CarpoolCorridorMap: React.FC<CarpoolCorridorMapProps> = ({
           <span className="font-mono text-amber-300 font-bold">{vehiclePlate}</span>
         </div>
       </div>
-
-      {/* -----------------------------------------------------------------
-          3. FLOATING BADGE (TOP RIGHT): ROUTE VERIFIED ON REAL ROADS
-         ----------------------------------------------------------------- */}
-      <div className="absolute top-22 sm:top-24 right-3 sm:right-4 z-20 pointer-events-none">
-        <div className="bg-white/95 backdrop-blur-xs border border-emerald-200/90 px-3 py-1.5 rounded-xl shadow-md flex items-center gap-2">
-          <div className="w-4 h-4 rounded-full bg-emerald-600 text-white flex items-center justify-center shadow-xs">
-            <Check className="w-2.5 h-2.5 stroke-[3]" />
-          </div>
-          <span className="text-[11px] font-black text-slate-800 tracking-tight">
-            Route Verified on Real Roads
-          </span>
-        </div>
       </div>
 
       {/* -----------------------------------------------------------------
-          4. FLOATING BUTTON (BOTTOM LEFT): RECENTER / GPS
+          3. FLOATING BUTTON (BOTTOM LEFT): RECENTER / GPS
          ----------------------------------------------------------------- */}
       <div className="absolute bottom-4 left-4 z-20">
         <button

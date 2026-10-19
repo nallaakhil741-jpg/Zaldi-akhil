@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { 
   MapPin, X, Clock, Phone, MessageSquare, 
   ShieldCheck, Star, CheckCircle, Check, ChevronRight, Wallet, 
   Settings, HelpCircle, Shield, LogOut, Tag, ArrowRight, ArrowLeft,
   Share2, Users, Sparkles, Navigation, Calendar, Box,
   Package, User, Briefcase, Laptop, AlertTriangle, Scale,
-  Info, Plus, Minus, AlertCircle, ChevronDown, ChevronUp, Receipt, CheckCircle2, Headphones, ArrowUpDown
+  Info, Plus, Minus, AlertCircle, ChevronDown, ChevronUp, Receipt, CheckCircle2, Headphones, Camera
 } from 'lucide-react';
 import { 
   CustomerTab, BookingStatus, Driver, RideOrder, VehicleTier, ServiceMode, RoadRouteInfo 
@@ -14,8 +15,9 @@ import {
   VEHICLE_OPTIONS, MOCK_LOCATIONS, MOCK_CARPOOLS, 
   OUTSTATION_PACKAGES, PAST_RIDES_MOCK, INITIAL_DRIVERS 
 } from '../services/mockData';
-import { generateActualRoadRoute, fetchLiveRoadRoute } from '../services/routeService';
-import { RoutingEngineType } from '../services/routingEngineService';
+import { fetchLiveRoadRoute, resolveAddressToRoadJunction } from '../services/routeService';
+import { resolveAddressToGeoCoord, RoutingEngineType } from '../services/routingEngineService';
+import { fetchPlaceDetails, fetchPlacePredictions, PlacePrediction, SelectedPlace } from '../services/placesService';
 import { InteractiveMap } from './InteractiveMap';
 import { ChatModal, CallModal, WalletModal, SafetyModal } from './Modals';
 import { sounds } from '../services/audio';
@@ -133,19 +135,28 @@ export const CustomerApp: React.FC<CustomerAppProps> = ({
   };
 
   const [isNightMode, setIsNightMode] = useState(false);
-  const [activeInput, setActiveInput] = useState<'pickup' | 'drop' | null>(null);
+  const [activeInput, setActiveInput] = useState<'drop' | null>(null);
   const [locationPinType, setLocationPinType] = useState<LocationPinType>('character_pin');
   const [isDrawerExpanded, setIsDrawerExpanded] = useState<boolean>(false);
+  const [locationSearchError, setLocationSearchError] = useState<string | null>(null);
+  const [isSearchingPlaces, setIsSearchingPlaces] = useState(false);
+  const [isResolvingPlace, setIsResolvingPlace] = useState(false);
 
   // Booking fields
   const [pickup, setPickup] = useState(DEFAULT_GPS_ADDRESS);
   const [drop, setDrop] = useState('');
+  const [dropQuery, setDropQuery] = useState('');
+  const [pickupPlace, setPickupPlace] = useState<SelectedPlace | null>(null);
+  const [dropPlace, setDropPlace] = useState<SelectedPlace | null>(null);
   const [distanceKm, setDistanceKm] = useState<number>(0);
   const [selectedVehicleId, setSelectedVehicleId] = useState<string>('AUTO');
   const [promoCode, setPromoCode] = useState('');
   const [discountAmount, setDiscountAmount] = useState(0);
   const [promoMessage, setPromoMessage] = useState<string | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<'WALLET' | 'UPI' | 'CASH'>('WALLET');
+  const [showPaymentsSheet, setShowPaymentsSheet] = useState(false);
+  const [paymentsSheetPage, setPaymentsSheetPage] = useState<'PAYMENT' | 'COUPONS'>('PAYMENT');
+  const [upiApp, setUpiApp] = useState('PhonePe');
 
   // Service Mode for all vehicles ('PERSON' | 'PARCEL')
   const [serviceModes, setServiceModes] = useState<Record<string, ServiceMode>>({
@@ -166,6 +177,9 @@ export const CustomerApp: React.FC<CustomerAppProps> = ({
   });
   const [isParcelDropdownOpen, setIsParcelDropdownOpen] = useState(false);
   const [customParcelInput, setCustomParcelInput] = useState('');
+  const [parcelPhotos, setParcelPhotos] = useState<string[]>([]);
+  const [parcelPhotoError, setParcelPhotoError] = useState<string | null>(null);
+  const parcelPhotoInputRef = useRef<HTMLInputElement>(null);
 
   const [parcelWeights, setParcelWeights] = useState<Record<string, number>>({
     BIKE: 5,
@@ -190,10 +204,10 @@ export const CustomerApp: React.FC<CustomerAppProps> = ({
 
   // Search autocomplete
   const [searchQuery, setSearchQuery] = useState('');
-  const [suggestions, setSuggestions] = useState<typeof MOCK_LOCATIONS>([]);
-  const pickupInputRef = useRef<HTMLInputElement>(null);
+  const [suggestions, setSuggestions] = useState<PlacePrediction[]>([]);
   const dropInputRef = useRef<HTMLInputElement>(null);
   const drawerScrollRef = useRef<HTMLDivElement>(null);
+  const placeResolutionIdRef = useRef(0);
 
   // Active ride tracking
   const activeOrder = orders.find(o => 
@@ -221,6 +235,7 @@ export const CustomerApp: React.FC<CustomerAppProps> = ({
   const [showCall, setShowCall] = useState(false);
   const [showSafety, setShowSafety] = useState(false);
   const [showFareBreakdown, setShowFareBreakdown] = useState(false);
+  const [selectedTransaction, setSelectedTransaction] = useState<(typeof PAST_RIDES_MOCK)[number] | null>(null);
 
   // Outstation selected booking modal state
   const [selectedOutstationPkg, setSelectedOutstationPkg] = useState<string | null>(null);
@@ -240,23 +255,20 @@ export const CustomerApp: React.FC<CustomerAppProps> = ({
   const [showSupportModal, setShowSupportModal] = useState<boolean>(false);
   const [bookingNoticeToast, setBookingNoticeToast] = useState<string | null>(null);
 
-  // Address updates automatically after the map stops
+  // Map movement updates only the fixed-pin preview; it does not commit a ride address.
   const handleAddressResolved = (addr: string, center: { x: number; y: number }) => {
     setFixedPinAddress(addr);
     setFixedPinPos(center);
-    // Automatically update the pickup search/address field
-    setPickup(addr);
-    if (drop) {
-      recalcDistance(addr, drop);
-    }
   };
 
-  // When user taps Confirm Location, save the selected real-world address for pickup
+  // Confirming a map pin commits its resolved address as a manual location selection.
   const handleConfirmLocation = (addr: string) => {
     sounds.playSuccess();
     setPickup(addr);
+    setPickupPlace({ placeId: '', formattedAddress: addr, ...resolveAddressToGeoCoord(addr) });
     setFixedPinAddress(addr);
-    // Prompt to select drop destination if empty
+    setActiveInput(null);
+    setSearchQuery('');
     if (!drop) {
       dropInputRef.current?.focus();
     }
@@ -268,9 +280,9 @@ export const CustomerApp: React.FC<CustomerAppProps> = ({
     setFixedPinPos(DEFAULT_GPS_COORDS);
     setFixedPinAddress(DEFAULT_GPS_ADDRESS);
     setPickup(DEFAULT_GPS_ADDRESS);
-    if (drop) {
-      recalcDistance(DEFAULT_GPS_ADDRESS, drop);
-    }
+    setPickupPlace({ placeId: '', formattedAddress: DEFAULT_GPS_ADDRESS, ...resolveAddressToGeoCoord(DEFAULT_GPS_ADDRESS) });
+    setActiveInput(null);
+    setSearchQuery('');
   };
 
   // Selected vehicle object
@@ -279,6 +291,7 @@ export const CustomerApp: React.FC<CustomerAppProps> = ({
   // Active Service Mode for the selected vehicle ('PERSON' or 'PARCEL')
   const currentMode: ServiceMode = useMemo(() => {
     if (selectedVehicleId === 'TRUCK') return 'PARCEL';
+    if (selectedVehicleId === 'CAB' || selectedVehicleId === 'PREMIUM') return 'PERSON';
     return serviceModes[selectedVehicleId] || 'PERSON';
   }, [selectedVehicleId, serviceModes]);
 
@@ -312,24 +325,30 @@ export const CustomerApp: React.FC<CustomerAppProps> = ({
   const [routingEngine, setRoutingEngine] = useState<RoutingEngineType>('GOOGLE_MAPS_ROUTES_API');
   const [liveRoadRoute, setLiveRoadRoute] = useState<RoadRouteInfo | null>(null);
   const [isLoadingRoadRoute, setIsLoadingRoadRoute] = useState(false);
-
-  // Fallback geometric road route
-  const fallbackRoadRoute = useMemo(() => {
-    if (!pickup || !drop) return null;
-    return generateActualRoadRoute(pickup, drop);
-  }, [pickup, drop]);
+  const [roadRouteError, setRoadRouteError] = useState<string | null>(null);
 
   // Fetch authentic road network route from Google Maps Routes API or OSRM
   useEffect(() => {
-    if (!pickup || !drop) {
+    if (!pickupPlace || !dropPlace) {
       setLiveRoadRoute(null);
       setDistanceKm(0);
+      setIsLoadingRoadRoute(false);
+      setRoadRouteError(null);
       return;
     }
     let isMounted = true;
     setIsLoadingRoadRoute(true);
+    setRoadRouteError(null);
+    setLiveRoadRoute(null);
+    setDistanceKm(0);
 
-    fetchLiveRoadRoute(pickup, drop, routingEngine)
+    fetchLiveRoadRoute(
+      pickupPlace.formattedAddress,
+      dropPlace.formattedAddress,
+      routingEngine,
+      pickupPlace,
+      dropPlace
+    )
       .then(res => {
         if (isMounted) {
           setLiveRoadRoute(res);
@@ -340,22 +359,21 @@ export const CustomerApp: React.FC<CustomerAppProps> = ({
         }
       })
       .catch(() => {
-        if (isMounted) setIsLoadingRoadRoute(false);
+        if (isMounted) {
+          setIsLoadingRoadRoute(false);
+          setRoadRouteError('Could not calculate a road route. Please select the locations again and retry.');
+        }
       });
 
-    return () => { isMounted = false; };
-  }, [pickup, drop, routingEngine]);
+    return () => {
+      isMounted = false;
+    };
+  }, [pickupPlace, dropPlace, routingEngine]);
 
-  const effectiveRoadRouteInfo = liveRoadRoute || fallbackRoadRoute;
-
-  // Sync road route distance - strictly 0 if either pickup or drop is empty
-  useEffect(() => {
-    if (pickup && drop && effectiveRoadRouteInfo) {
-      setDistanceKm(effectiveRoadRouteInfo.totalDistanceKm);
-    } else if (!pickup || !drop) {
-      setDistanceKm(0);
-    }
-  }, [pickup, drop, effectiveRoadRouteInfo]);
+  const effectiveRoadRouteInfo = liveRoadRoute;
+  const hasSelectedRoute = Boolean(
+    pickupPlace && dropPlace && effectiveRoadRouteInfo && !isLoadingRoadRoute
+  );
 
   // Extra luggage fee is removed for bike and auto passenger trips
   const extraLuggageFee = 0;
@@ -398,18 +416,41 @@ export const CustomerApp: React.FC<CustomerAppProps> = ({
     return null;
   }, [currentMode, currentParcelWeight, currentParcelSpec, selectedVehicle]);
 
-  // Autocomplete filtering
+  // Search Google Places without changing the committed route while the user types.
   useEffect(() => {
-    if (!searchQuery.trim()) {
+    const query = searchQuery.trim();
+    if (!activeInput || query.length < 2) {
       setSuggestions([]);
+      setLocationSearchError(null);
+      setIsSearchingPlaces(false);
       return;
     }
-    const q = searchQuery.toLowerCase();
-    const filtered = MOCK_LOCATIONS.filter(loc => 
-      loc.name.toLowerCase().includes(q) || loc.area.toLowerCase().includes(q)
-    );
-    setSuggestions(filtered);
-  }, [searchQuery]);
+
+    let isActive = true;
+    setSuggestions([]);
+    setIsSearchingPlaces(true);
+    const timer = window.setTimeout(() => {
+      fetchPlacePredictions(query)
+        .then(results => {
+          if (isActive) {
+            setSuggestions(results);
+            setIsSearchingPlaces(false);
+          }
+        })
+        .catch(error => {
+          if (!isActive) return;
+          setSuggestions([]);
+          setIsSearchingPlaces(false);
+          setLocationSearchError(error instanceof Error ? error.message : 'Location suggestions could not be loaded.');
+        });
+    }, 250);
+
+    return () => {
+      isActive = false;
+      window.clearTimeout(timer);
+      setIsSearchingPlaces(false);
+    };
+  }, [activeInput, searchQuery]);
 
   // Real-time smooth driver animation effect advancing through all driver statuses
   useEffect(() => {
@@ -436,7 +477,7 @@ export const CustomerApp: React.FC<CustomerAppProps> = ({
     // 3. DRIVER_COMING: Smooth continuous progress along Driver -> Pickup route
     if (activeOrder.status === 'DRIVER_COMING') {
       const interval = setInterval(() => {
-        const next = Math.min(100, +(activeOrder.progressPercent + 2.2).toFixed(1));
+        const next = Math.min(100, +(activeOrder.progressPercent + 9.2).toFixed(1));
         if (next >= 100) {
           clearInterval(interval);
           sounds.playAlert();
@@ -444,7 +485,7 @@ export const CustomerApp: React.FC<CustomerAppProps> = ({
         } else {
           onUpdateOrder(activeOrder.id, { progressPercent: next });
         }
-      }, 120);
+      }, 500);
       return () => clearInterval(interval);
     }
 
@@ -460,7 +501,7 @@ export const CustomerApp: React.FC<CustomerAppProps> = ({
     // 5. TRIP_STARTED / IN_PROGRESS: Smooth continuous progress along actual road route to destination
     if (activeOrder.status === 'TRIP_STARTED' || activeOrder.status === 'IN_PROGRESS') {
       const interval = setInterval(() => {
-        const next = Math.min(100, +(activeOrder.progressPercent + 1.25).toFixed(1));
+        const next = Math.min(100, +(activeOrder.progressPercent + 4.8).toFixed(1));
         if (next >= 100) {
           clearInterval(interval);
           sounds.playSuccess();
@@ -468,74 +509,81 @@ export const CustomerApp: React.FC<CustomerAppProps> = ({
         } else {
           onUpdateOrder(activeOrder.id, { progressPercent: next });
         }
-      }, 130);
+      }, 500);
       return () => clearInterval(interval);
     }
   }, [activeOrder?.id, activeOrder?.status, activeOrder?.progressPercent, onUpdateOrder]);
 
-  const handleSelectLocation = (locName: string) => {
+  const handleSelectLocation = async (prediction: PlacePrediction) => {
+    if (!activeInput) return;
+    const requestId = ++placeResolutionIdRef.current;
     sounds.playPop();
-    setSearchQuery('');
     setSuggestions([]);
-    if (activeInput === 'pickup') {
-      setPickup(locName);
-      setFixedPinAddress(locName);
-      if (drop) {
-        recalcDistance(locName, drop);
+    setLocationSearchError(null);
+    setIsResolvingPlace(true);
+    try {
+      const place = await fetchPlaceDetails(prediction.placeId);
+      if (requestId !== placeResolutionIdRef.current) return;
+      setDrop(place.formattedAddress);
+      setDropQuery(place.formattedAddress);
+      setDropPlace(place);
+      setActiveInput(null);
+      setSearchQuery('');
+    } catch (error) {
+      if (requestId === placeResolutionIdRef.current) {
+        setLocationSearchError(error instanceof Error ? error.message : 'The selected address could not be loaded.');
       }
-    } else {
-      setDrop(locName);
-      const effectivePickup = pickup || fixedPinAddress || DEFAULT_GPS_ADDRESS;
-      if (!pickup) {
-        setPickup(effectivePickup);
-      }
-      recalcDistance(effectivePickup, locName);
-    }
-    setActiveInput(null);
-  };
-
-  const handleSwapLocations = () => {
-    sounds.playPop();
-    const tempP = pickup;
-    const tempD = drop;
-    if (!tempD) return;
-    setPickup(tempD);
-    setDrop(tempP);
-    setFixedPinAddress(tempD);
-    if (tempD && tempP) {
-      recalcDistance(tempD, tempP);
+    } finally {
+      if (requestId === placeResolutionIdRef.current) setIsResolvingPlace(false);
     }
   };
 
-  const recalcDistance = (p: string, d: string) => {
-    if (!p || !d) {
-      setDistanceKm(0);
+  const searchForLocation = (query: string) => {
+    setActiveInput('drop');
+    setSearchQuery(query);
+    setLocationSearchError(null);
+    setDropQuery(query);
+    window.setTimeout(() => {
+      dropInputRef.current?.focus();
+    }, 0);
+  };
+
+  const handleApplyPromo = (code = promoCode) => {
+    const normalizedCode = code.trim().toUpperCase();
+    if (!normalizedCode) {
+      setPromoMessage('Enter a coupon code to apply.');
       return;
     }
-    // Calculate deterministic realistic distance based on length
-    const hash = (p.length * 3 + d.length * 7) % 18;
-    const dist = Math.max(hash + 4, 3);
-    setDistanceKm(dist);
+    sounds.playPing();
+    if (normalizedCode === 'ZALDI50' || normalizedCode === 'SAVE50') {
+      setDiscountAmount(50);
+      setPromoCode(normalizedCode);
+      setPromoMessage(`Coupon ${normalizedCode} applied! ₹50 OFF.`);
+    } else if (normalizedCode === 'FIRST') {
+      setDiscountAmount(75);
+      setPromoCode(normalizedCode);
+      setPromoMessage('Coupon FIRST applied! ₹75 OFF.');
+    } else {
+      setPromoMessage('That coupon code is invalid. Check the code and try again.');
+    }
   };
 
-  const handleApplyPromo = () => {
-    if (!promoCode.trim()) return;
-    sounds.playPing();
-    if (promoCode.toUpperCase() === 'ZALDI50' || promoCode.toUpperCase() === 'SAVE50') {
-      setDiscountAmount(50);
-      setPromoMessage('🎉 Coupon ZALDI50 applied! ₹50 OFF saved.');
-    } else if (promoCode.toUpperCase() === 'FIRST') {
-      setDiscountAmount(75);
-      setPromoMessage('🚀 First ride special! ₹75 OFF applied.');
-    } else {
-      setDiscountAmount(25);
-      setPromoMessage('✨ Standard promo code applied: ₹25 OFF.');
-    }
+  const handleSelectPaymentMethod = (method: 'WALLET' | 'UPI' | 'CASH', app?: string) => {
+    setPaymentMethod(method);
+    if (method === 'UPI' && app) setUpiApp(app);
+    sounds.playSuccess();
+    setPaymentsSheetPage('PAYMENT');
+    setShowPaymentsSheet(false);
   };
 
   // Start booking flow
   const handleConfirmBooking = () => {
-    if (!pickup || !drop) return;
+    if (!pickupPlace || !dropPlace || !liveRoadRoute || isLoadingRoadRoute) return;
+    if (currentMode === 'PARCEL' && parcelPhotos.length === 0) {
+      setParcelPhotoError('At least one parcel photo is required before booking.');
+      parcelPhotoInputRef.current?.click();
+      return;
+    }
     sounds.playAlert();
 
     const rideId = "TRP-" + Math.random().toString(36).substring(2, 8).toUpperCase();
@@ -545,7 +593,11 @@ export const CustomerApp: React.FC<CustomerAppProps> = ({
       customerPhone: "+91 98480-12345",
       pickup,
       drop,
-      distanceKm: effectiveRoadRouteInfo?.totalDistanceKm || (distanceKm > 0 ? distanceKm : 5.8),
+      pickupPlaceId: pickupPlace.placeId || undefined,
+      dropPlaceId: dropPlace.placeId || undefined,
+      pickupCoordinates: { lat: pickupPlace.lat, lng: pickupPlace.lng },
+      dropCoordinates: { lat: dropPlace.lat, lng: dropPlace.lng },
+      distanceKm: effectiveRoadRouteInfo!.totalDistanceKm,
       fare: rawFare,
       discount: discountAmount,
       finalFare: finalCalculatedFare,
@@ -560,6 +612,7 @@ export const CustomerApp: React.FC<CustomerAppProps> = ({
       serviceMode: currentMode,
       parcelType: currentMode === 'PARCEL' ? currentParcelType : undefined,
       parcelWeightKg: currentMode === 'PARCEL' ? currentParcelWeight : undefined,
+      parcelPhotos: currentMode === 'PARCEL' ? parcelPhotos : undefined,
       luggageWeightKg: undefined,
       extraLuggageFee: 0,
       messages: [
@@ -573,6 +626,10 @@ export const CustomerApp: React.FC<CustomerAppProps> = ({
     };
 
     onNewOrder(newRide);
+    if (currentMode === 'PARCEL') {
+      setParcelPhotos([]);
+      setParcelPhotoError(null);
+    }
   };
 
   const handleCancelBooking = (orderId: string) => {
@@ -596,7 +653,7 @@ export const CustomerApp: React.FC<CustomerAppProps> = ({
       if (['TRIP_STARTED', 'IN_PROGRESS', 'ARRIVING'].includes(activeOrder.status)) return '470px';
       if (['TRIP_COMPLETED', 'COMPLETED'].includes(activeOrder.status)) return '540px';
     }
-    if (activeInput && suggestions.length > 0) return '78%';
+    if (activeInput) return '85%';
     if (isDrawerExpanded) return '85%';
     if (drop && distanceKm > 0) return '70%';
 
@@ -605,9 +662,9 @@ export const CustomerApp: React.FC<CustomerAppProps> = ({
   };
 
   return (
-    <div className="w-full h-[100dvh] min-h-[100dvh] max-h-[100dvh] bg-white text-slate-900 flex flex-col font-sans overflow-hidden relative select-none">
+    <div className="w-full h-[100svh] min-h-[100svh] max-h-[100svh] bg-white text-slate-900 flex flex-col font-sans overflow-hidden relative select-none">
       
-      {/* Full-bleed Android Mobile Viewport (100% width and 100dvh) */}
+      {/* Full-bleed Android Mobile Viewport */}
       <div className="relative w-full h-full flex-1 flex flex-col font-sans overflow-hidden bg-white">
         
         {/* Full-bleed Carpool Experience (Positioned seamlessly above bottom nav) */}
@@ -629,13 +686,20 @@ export const CustomerApp: React.FC<CustomerAppProps> = ({
               }}
               isMapFocused={isCarpoolMapFocused}
               onToggleMapFocus={() => setIsCarpoolMapFocused(prev => !prev)}
-              onUpdatePickupLocation={(newAddr) => {
+                onUpdatePickupLocation={(newAddr) => {
                 setPickup(newAddr);
-                setFixedPinAddress(newAddr);
-              }}
-              onSelectDropoffLocation={(newDrop) => {
-                setDrop(newDrop);
-              }}
+                  setPickupPlace(null);
+                  setLiveRoadRoute(null);
+                  setDistanceKm(0);
+                  setFixedPinAddress(newAddr);
+                }}
+                onSelectDropoffLocation={(newDrop) => {
+                  setDrop(newDrop);
+                  setDropQuery(newDrop);
+                  setDropPlace(null);
+                  setLiveRoadRoute(null);
+                  setDistanceKm(0);
+                }}
               onBookCarpoolSuccess={(poolId) => {
                 setJoinedPoolId(poolId);
               }}
@@ -662,6 +726,7 @@ export const CustomerApp: React.FC<CustomerAppProps> = ({
             isNightMode={isNightMode}
             onToggleNightMode={() => setIsNightMode(!isNightMode)}
             showFixedPin={showFixedPin && !drop && !isCarpoolMapFocused && !joinedPoolId && customerTab !== 'CARPOOL'}
+            showNearbyDrivers={customerTab === 'BOOKING'}
             fixedPinAddress={fixedPinAddress}
             fixedPinPos={fixedPinPos}
             onAddressResolved={handleAddressResolved}
@@ -671,10 +736,8 @@ export const CustomerApp: React.FC<CustomerAppProps> = ({
             onChangePinType={setLocationPinType}
             onUpdatePickup={(newAddr) => {
               setPickup(newAddr);
+              setPickupPlace({ placeId: '', formattedAddress: newAddr, ...resolveAddressToGeoCoord(newAddr) });
               setFixedPinAddress(newAddr);
-              if (drop) {
-                recalcDistance(newAddr, drop);
-              }
               if (activeOrder) {
                 onUpdateOrder(activeOrder.id, { pickup: newAddr });
               }
@@ -686,10 +749,13 @@ export const CustomerApp: React.FC<CustomerAppProps> = ({
             isCarpoolActive={customerTab === 'CARPOOL'}
             routingEngine={routingEngine}
             onRoutingEngineChange={setRoutingEngine}
+            managedRoute
+            managedRouteInfo={effectiveRoadRouteInfo}
             onSelectDropoffLocation={(newDrop) => {
               sounds.playSuccess();
               setDrop(newDrop);
-              recalcDistance(pickup || fixedPinAddress || DEFAULT_GPS_ADDRESS, newDrop);
+              setDropQuery(newDrop);
+              setDropPlace({ placeId: '', formattedAddress: newDrop, ...resolveAddressToGeoCoord(newDrop) });
             }}
           />
 
@@ -754,7 +820,7 @@ export const CustomerApp: React.FC<CustomerAppProps> = ({
         </div>
 
         {/* Bottom Sheet Drawer */}
-        <div 
+        <div
           className={`absolute left-0 right-0 w-full bg-white rounded-t-3xl shadow-[0_-15px_40px_rgba(0,0,0,0.1)] border-t border-slate-100 transition-all duration-300 ease-in-out z-20 flex flex-col ${
             customerTab === 'CARPOOL'
               ? 'hidden pointer-events-none'
@@ -777,7 +843,7 @@ export const CustomerApp: React.FC<CustomerAppProps> = ({
             title="Tap to expand / collapse details"
           />
 
-          <div ref={drawerScrollRef} className={`flex-1 min-h-0 overflow-y-auto px-3.5 sm:px-5 no-scrollbar relative text-slate-900 ${(currentMode === 'PERSON' || customerTab === 'CARPOOL') ? 'pb-2' : 'pb-6'}`}>
+          <div ref={drawerScrollRef} className={`flex-1 min-h-0 overflow-y-auto overscroll-y-contain touch-pan-y px-3.5 sm:px-5 no-scrollbar relative text-slate-900 ${(currentMode === 'PERSON' || customerTab === 'CARPOOL') ? 'pb-2' : 'pb-6'}`} style={{ WebkitOverflowScrolling: 'touch' }}>
             
             {/* =========================================
                 1. BOOKING TAB
@@ -788,65 +854,9 @@ export const CustomerApp: React.FC<CustomerAppProps> = ({
                 {!activeOrder && (
                   <div className="space-y-3 pt-0.5">
                     
-                    {/* Dual Route Search Card (Pickup + Swap + Destination) */}
+                    {/* Destination search */}
                     <div className="bg-slate-50/90 border border-slate-200/90 rounded-2xl p-2.5 sm:p-3 relative shadow-xs space-y-2">
-                      
-                      {/* 1. Pickup Input Row */}
-                      <div className="flex items-center gap-2.5 bg-white border border-slate-200/90 rounded-xl px-3 py-2 focus-within:ring-2 focus-within:ring-emerald-500/20 focus-within:border-emerald-500 transition shadow-2xs">
-                        <div className="w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-white shadow-xs flex-shrink-0 ring-2 ring-emerald-500/30" />
-                        <div className="flex-1 min-w-0">
-                          <div className="text-[9px] font-black uppercase tracking-wider text-emerald-700 leading-none">
-                            Pickup Point
-                          </div>
-                          <input 
-                            ref={pickupInputRef}
-                            type="text" 
-                            value={pickup}
-                            onChange={(e) => {
-                              const val = e.target.value;
-                              setPickup(val);
-                              setSearchQuery(val);
-                              if (drop) recalcDistance(val, drop);
-                            }}
-                            onFocus={() => {
-                              setActiveInput('pickup');
-                              setSearchQuery(pickup);
-                            }}
-                            placeholder="Current location (detecting...)"
-                            className="w-full bg-transparent font-bold text-xs outline-none text-slate-900 placeholder:text-slate-400 truncate mt-0.5"
-                          />
-                        </div>
-
-                        {/* Recenter GPS Location Button */}
-                        <button
-                          type="button"
-                          onClick={handleUseCurrentLocation}
-                          title="Use Device GPS Location"
-                          className="p-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-600 transition flex items-center gap-1 text-[10px] font-bold flex-shrink-0"
-                        >
-                          <Navigation className="w-3.5 h-3.5 text-emerald-600" />
-                          <span className="hidden xs:inline">GPS</span>
-                        </button>
-                      </div>
-
-                      {/* Middle Connector with Route Swap Button */}
-                      <div className="relative flex items-center justify-between px-2 -my-1">
-                        <div className="flex items-center gap-1.5 text-[10px] text-slate-400 font-semibold pl-2">
-                          <span className="w-1 h-1 rounded-full bg-slate-300" />
-                          <span className="w-1 h-1 rounded-full bg-slate-300" />
-                          <span className="w-1 h-1 rounded-full bg-slate-300" />
-                        </div>
-                        <button
-                          type="button"
-                          onClick={handleSwapLocations}
-                          title="Swap Pickup & Drop"
-                          className="w-6 h-6 rounded-full bg-white hover:bg-blue-50 border border-slate-200 text-slate-500 hover:text-brand-blue flex items-center justify-center transition shadow-2xs active:rotate-180 duration-200"
-                        >
-                          <ArrowUpDown className="w-3 h-3" />
-                        </button>
-                      </div>
-
-                      {/* 2. Drop / Destination Input Row */}
+                      {/* Destination Input Row */}
                       <div className="flex items-center gap-2.5 bg-white border border-slate-200/90 rounded-xl px-3 py-2 focus-within:ring-2 focus-within:ring-rose-500/20 focus-within:border-rose-500 transition shadow-2xs">
                         <div className="w-3.5 h-3.5 rounded-sm bg-rose-500 border-2 border-white shadow-xs flex-shrink-0 ring-2 ring-rose-500/30" />
                         <div className="flex-1 min-w-0">
@@ -856,20 +866,22 @@ export const CustomerApp: React.FC<CustomerAppProps> = ({
                           <input 
                             ref={dropInputRef}
                             type="text" 
-                            value={drop}
+                            value={dropQuery}
+                            onKeyDown={(event) => {
+                              if (event.key === 'Enter' && suggestions[0]) {
+                                event.preventDefault();
+                                void handleSelectLocation(suggestions[0]);
+                              }
+                            }}
                             onChange={(e) => {
                               const val = e.target.value;
-                              setDrop(val);
+                              setDropQuery(val);
                               setSearchQuery(val);
-                              const effP = pickup || fixedPinAddress || DEFAULT_GPS_ADDRESS;
-                              if (!pickup && val.trim()) {
-                                setPickup(effP);
-                              }
-                              recalcDistance(pickup || effP, val);
+                              setLocationSearchError(null);
                             }}
                             onFocus={() => {
                               setActiveInput('drop');
-                              setSearchQuery(drop);
+                              setSearchQuery(dropQuery);
                             }}
                             placeholder="Where to Next ?"
                             className="w-full bg-transparent font-bold text-xs outline-none text-slate-900 placeholder:text-slate-400 truncate mt-0.5"
@@ -883,7 +895,10 @@ export const CustomerApp: React.FC<CustomerAppProps> = ({
                             onClick={() => {
                               sounds.playPop();
                               setDrop('');
-                              recalcDistance(pickup, '');
+                              setDropQuery('');
+                              setDropPlace(null);
+                              setLiveRoadRoute(null);
+                              setDistanceKm(0);
                               dropInputRef.current?.focus();
                             }} 
                             title="Clear Drop"
@@ -895,29 +910,82 @@ export const CustomerApp: React.FC<CustomerAppProps> = ({
                       </div>
 
                       {/* Autocomplete Dropdown */}
-                      {activeInput && suggestions.length > 0 && (
+                      {activeInput && (suggestions.length > 0 || isSearchingPlaces || isResolvingPlace || locationSearchError) && (
                         <div className="absolute top-[102%] left-0 right-0 bg-white shadow-2xl border border-slate-200 rounded-2xl z-50 max-h-52 overflow-y-auto p-1 divide-y divide-slate-100 animate-in fade-in">
                           <div className="px-3 py-1.5 text-[10px] font-extrabold uppercase text-slate-400">
-                            Select {activeInput === 'pickup' ? 'Pickup Location' : 'Destination'}
+                            Select Destination
                           </div>
-                          {suggestions.map((loc) => (
-                            <div 
-                              key={loc.id}
-                              onClick={() => handleSelectLocation(loc.name)}
-                              className="flex items-center gap-3 p-2.5 hover:bg-slate-100 rounded-xl cursor-pointer transition"
+                          {isResolvingPlace && (
+                            <div className="px-3 py-2 text-xs font-semibold text-slate-500">Loading selected address…</div>
+                          )}
+                          {isSearchingPlaces && !isResolvingPlace && (
+                            <div role="status" className="px-3 py-2 text-xs font-semibold text-slate-500">Searching addresses…</div>
+                          )}
+                          {locationSearchError && (
+                            <div role="alert" className="px-3 py-2 text-xs font-semibold text-rose-600">{locationSearchError}</div>
+                          )}
+                          {suggestions.map((place) => (
+                            <button
+                              type="button"
+                              key={place.placeId}
+                              onMouseDown={(event) => event.preventDefault()}
+                              onClick={() => void handleSelectLocation(place)}
+                              className="w-full flex items-center gap-3 p-2.5 text-left hover:bg-slate-100 rounded-xl cursor-pointer transition"
                             >
                               <div className="p-1.5 rounded-lg bg-blue-50 text-brand-blue flex-shrink-0">
                                 <Clock className="w-3.5 h-3.5" />
                               </div>
                               <div className="flex-1 min-w-0">
-                                <div className="text-xs font-bold text-slate-900 truncate">{loc.name}</div>
-                                <div className="text-[10px] text-slate-500 truncate">{loc.area}</div>
+                                <div className="text-xs font-bold text-slate-900 truncate">{place.primaryText}</div>
+                                <div className="text-[10px] text-slate-500 truncate">{place.secondaryText || place.description}</div>
                               </div>
-                            </div>
+                            </button>
                           ))}
+                          {suggestions.length > 0 && (
+                            <div className="px-3 py-1 text-right text-[9px] font-semibold text-slate-400">
+                              Powered by Google
+                            </div>
+                          )}
+                          {!isSearchingPlaces && !isResolvingPlace && !locationSearchError && suggestions.length === 0 && searchQuery.trim().length >= 2 && (
+                            <div className="px-3 py-2 text-xs font-semibold text-slate-500">No matching addresses found.</div>
+                          )}
                         </div>
                       )}
                     </div>
+
+                    {isLoadingRoadRoute && (
+                      <div role="status" className="px-3 py-2 rounded-xl bg-blue-50 border border-blue-200 text-xs font-bold text-blue-700">
+                        Calculating road route…
+                      </div>
+                    )}
+                    {roadRouteError && (
+                      <div role="alert" className="px-3 py-2 rounded-xl bg-rose-50 border border-rose-200 text-xs font-bold text-rose-700 flex items-center justify-between gap-2">
+                        <span>{roadRouteError}</span>
+                        <button
+                          type="button"
+                          onClick={() => setPickupPlace(current => current ? { ...current } : current)}
+                          className="flex-shrink-0 underline"
+                        >
+                          Retry
+                        </button>
+                      </div>
+                    )}
+                    {hasSelectedRoute && effectiveRoadRouteInfo && (
+                      <div className="grid grid-cols-3 gap-2 p-2.5 bg-white/80 border border-slate-200 rounded-2xl text-center">
+                        <div className="min-w-0">
+                          <div className="text-[10px] text-slate-500 font-semibold">Road Distance</div>
+                          <div className="text-xs font-black text-slate-900 font-mono">{effectiveRoadRouteInfo.totalDistanceKm} km</div>
+                        </div>
+                        <div className="min-w-0 border-x border-slate-200">
+                          <div className="text-[10px] text-slate-500 font-semibold">Travel Time</div>
+                          <div className="text-xs font-black text-slate-900 font-mono">~{effectiveRoadRouteInfo.estimatedTravelTimeMin} min</div>
+                        </div>
+                        <div className="min-w-0">
+                          <div className="text-[10px] text-slate-500 font-semibold">Driver ETA</div>
+                          <div className="text-xs font-black text-emerald-700 font-mono">{selectedVehicle.etaMin} min</div>
+                        </div>
+                      </div>
+                    )}
 
                     {/* Quick Popular Destination Chips */}
                     {!drop && (
@@ -926,62 +994,13 @@ export const CustomerApp: React.FC<CustomerAppProps> = ({
                         {MOCK_LOCATIONS.slice(0, 4).map((loc) => (
                           <button
                             key={loc.id}
-                            onClick={() => {
-                              sounds.playPop();
-                              const effPickup = pickup || fixedPinAddress || DEFAULT_GPS_ADDRESS;
-                              if (!pickup) setPickup(effPickup);
-                              setDrop(loc.name);
-                              recalcDistance(effPickup, loc.name);
-                            }}
+                            onClick={() => searchForLocation(loc.name)}
                             className="flex-shrink-0 px-2.5 py-1 rounded-full bg-slate-100 hover:bg-blue-50 border border-slate-200 hover:border-blue-300 text-[11px] font-semibold text-slate-700 hover:text-brand-blue transition flex items-center gap-1 shadow-2xs active:scale-95"
                           >
                             <MapPin className="w-3 h-3 text-brand-blue flex-shrink-0" />
                             <span>{loc.name.split(' ')[0]}</span>
                           </button>
                         ))}
-                      </div>
-                    )}
-
-                    {/* Dedicated Route Trip Details Card (Visible as soon as route is set) */}
-                    {pickup && drop && distanceKm > 0 && (
-                      <div className="p-3 bg-gradient-to-r from-blue-50 via-indigo-50/40 to-slate-50 border border-blue-200/80 rounded-2xl space-y-2 shadow-xs animate-in fade-in slide-in-from-top-1">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <span className="px-2 py-0.5 rounded-md bg-brand-blue text-white font-black text-[10px] uppercase tracking-wider">
-                              Fastest Route
-                            </span>
-                            <span className="text-[10px] text-emerald-600 font-bold flex items-center gap-1">
-                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                              Light Traffic
-                            </span>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              sounds.playTap();
-                              setShowFareBreakdown(true);
-                            }}
-                            className="text-[10px] font-black text-brand-blue hover:underline flex items-center gap-0.5"
-                          >
-                            <span>Fare Details</span>
-                            <ChevronRight className="w-3 h-3" />
-                          </button>
-                        </div>
-
-                        <div className="grid grid-cols-3 gap-2 pt-1 border-t border-blue-200/50 text-center">
-                          <div className="bg-white/80 p-1.5 rounded-xl border border-blue-100">
-                            <div className="text-[10px] text-slate-500 font-semibold">Distance</div>
-                            <div className="text-xs font-black text-slate-900 font-mono">{distanceKm} km</div>
-                          </div>
-                          <div className="bg-white/80 p-1.5 rounded-xl border border-blue-100">
-                            <div className="text-[10px] text-slate-500 font-semibold">Travel Time</div>
-                            <div className="text-xs font-black text-slate-900 font-mono">~{Math.max(3, Math.round(distanceKm * 2.5))} min</div>
-                          </div>
-                          <div className="bg-white/80 p-1.5 rounded-xl border border-blue-100">
-                            <div className="text-[10px] text-slate-500 font-semibold">Driver ETA</div>
-                            <div className="text-xs font-black text-emerald-600 font-mono">2-3 min</div>
-                          </div>
-                        </div>
                       </div>
                     )}
 
@@ -1006,12 +1025,7 @@ export const CustomerApp: React.FC<CustomerAppProps> = ({
                         {MOCK_LOCATIONS.slice(0, 4).map((loc) => (
                           <button
                             key={loc.id}
-                            onClick={() => {
-                              const effPickup = pickup || fixedPinAddress || DEFAULT_GPS_ADDRESS;
-                              if (!pickup) setPickup(effPickup);
-                              setDrop(loc.name);
-                              recalcDistance(effPickup, loc.name);
-                            }}
+                            onClick={() => searchForLocation(loc.name)}
                             className="flex-shrink-0 px-3 py-1.5 rounded-full bg-white hover:bg-slate-50 border border-slate-200 text-[11px] font-semibold text-slate-700 transition flex items-center gap-1.5 shadow-xs"
                           >
                             <MapPin className="w-3 h-3 text-brand-blue" />
@@ -1020,36 +1034,6 @@ export const CustomerApp: React.FC<CustomerAppProps> = ({
                         ))}
                       </div>
                     )}
-
-                    {/* Prominent Highway Carpool Quick Access Banner */}
-                    <div 
-                      onClick={() => {
-                        sounds.playSuccess();
-                        setCustomerTab('CARPOOL');
-                      }}
-                      className="p-3 bg-gradient-to-r from-emerald-600 via-teal-600 to-slate-900 text-white rounded-2xl shadow-md border border-emerald-500/40 flex items-center justify-between cursor-pointer hover:shadow-lg hover:scale-[1.01] transition group"
-                    >
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className="w-10 h-10 rounded-xl bg-white/15 backdrop-blur-md flex items-center justify-center text-lg flex-shrink-0 border border-white/20 shadow-inner">
-                          🚗
-                        </div>
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-1.5 flex-wrap">
-                            <span className="text-[10px] font-black uppercase tracking-wider bg-emerald-400 text-slate-950 px-2 py-0.5 rounded-full shadow-2xs">
-                              HIGHWAY CARPOOL
-                            </span>
-                            <span className="text-[10px] text-emerald-200 font-bold">Warangal ⇄ Hyderabad Corridor</span>
-                          </div>
-                          <p className="text-xs font-black text-white mt-0.5 truncate">
-                            Share rides, pick intermediate stops & save up to 70% • From ₹80
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-1 text-xs font-black text-emerald-300 group-hover:translate-x-1 transition flex-shrink-0 pl-2">
-                        <span>Open Hub</span>
-                        <ArrowRight className="w-3.5 h-3.5" />
-                      </div>
-                    </div>
 
                     {/* Vehicle Tier Horizontal Carousel */}
                     <div className="space-y-1.5">
@@ -1062,10 +1046,10 @@ export const CustomerApp: React.FC<CustomerAppProps> = ({
                           <span className="flex-shrink-0 text-xs font-bold text-slate-800 dark:text-slate-100 flex items-center gap-1">
                             <span className="text-slate-700 dark:text-slate-200 font-bold">Est.Dist :</span>
                             <span className="font-black text-slate-950 dark:text-white">
-                              {pickup && drop && distanceKm > 0 ? `${distanceKm} kms` : '--'}
+                              {hasSelectedRoute ? `${distanceKm} kms` : '--'}
                             </span>
                           </span>
-                          {pickup && drop && distanceKm > 0 && (
+                          {hasSelectedRoute && (
                             <button
                               type="button"
                               onClick={() => {
@@ -1082,12 +1066,12 @@ export const CustomerApp: React.FC<CustomerAppProps> = ({
                         </div>
                       </div>
 
-                      <div className="flex gap-2 sm:gap-2.5 overflow-x-auto no-scrollbar py-2.5 px-1 -mx-0.5 touch-pan-x scroll-smooth overscroll-x-contain">
+                      <div role="group" aria-label="Vehicle options" className="flex gap-2 sm:gap-2.5 overflow-x-auto py-2.5 px-1 -mx-0.5 scroll-smooth">
                         {VEHICLE_OPTIONS.map((v) => {
                           const isSelected = selectedVehicleId === v.id;
 
                           // Consistent Equalized Pricing: Base ₹25 + ₹8.00/km + 5% GST
-                          const hasRoute = Boolean(pickup && drop && distanceKm > 0);
+                          const hasRoute = hasSelectedRoute && distanceKm > 0;
                           const tierDistanceCharge = hasRoute ? Math.round(distanceKm * 8) : 0;
                           const tierTax = hasRoute ? Math.max(1, Math.round((25 + tierDistanceCharge) * 0.05)) : 0;
                           const tierFare = hasRoute 
@@ -1182,7 +1166,6 @@ export const CustomerApp: React.FC<CustomerAppProps> = ({
                             <span>Cargo Freight & Transport (Max 750 kg)</span>
                           </div>
                         ) : (
-                          // For Bike, Auto, Cab Prime (Car) & Zaldi XL: Both Ride and Transport services available
                           <div className="bg-white p-0.5 rounded-xl flex items-center gap-1 border border-slate-200 flex-shrink-0 shadow-xs">
                               <button
                                 type="button"
@@ -1200,24 +1183,26 @@ export const CustomerApp: React.FC<CustomerAppProps> = ({
                                 <span>Ride</span>
                               </button>
 
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  sounds.playPop();
-                                  setServiceModes(prev => ({ ...prev, [selectedVehicleId]: 'PARCEL' }));
-                                }}
-                                className={`py-1.5 px-3 rounded-lg text-xs font-black flex items-center gap-1.5 transition ${
-                                  currentMode === 'PARCEL'
-                                    ? 'bg-amber-500 text-white shadow-md'
-                                    : 'text-slate-600 hover:text-slate-900'
-                                }`}
-                              >
-                                <Package className="w-3.5 h-3.5" />
-                                <span>Transport</span>
-                                <span className="text-[9px] px-1 py-0.2 rounded bg-amber-400/20 text-amber-200 font-bold">
-                                  Max {currentParcelSpec.maxWeight}kg
-                                </span>
-                              </button>
+                              {selectedVehicleId !== 'CAB' && selectedVehicleId !== 'PREMIUM' && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    sounds.playPop();
+                                    setServiceModes(prev => ({ ...prev, [selectedVehicleId]: 'PARCEL' }));
+                                  }}
+                                  className={`py-1.5 px-3 rounded-lg text-xs font-black flex items-center gap-1.5 transition ${
+                                    currentMode === 'PARCEL'
+                                      ? 'bg-amber-500 text-white shadow-md'
+                                      : 'text-slate-600 hover:text-slate-900'
+                                  }`}
+                                >
+                                  <Package className="w-3.5 h-3.5" />
+                                  <span>Transport</span>
+                                  <span className="text-[9px] px-1 py-0.2 rounded bg-amber-400/20 text-amber-200 font-bold">
+                                    Max {currentParcelSpec.maxWeight}kg
+                                  </span>
+                                </button>
+                              )}
                             </div>
                           )}
                         </div>
@@ -1239,26 +1224,14 @@ export const CustomerApp: React.FC<CustomerAppProps> = ({
 
                             {/* Dropdown Container */}
                             <div className="relative">
-                              {/* Backdrop to close dropdown on click outside */}
-                              {isParcelDropdownOpen && (
-                                <div 
-                                  className="fixed inset-0 z-30" 
-                                  onClick={() => setIsParcelDropdownOpen(false)} 
-                                />
-                              )}
-
                               {/* Dropdown Trigger Button */}
                               <button
                                 type="button"
                                 onClick={() => {
                                   sounds.playTap();
-                                  setIsParcelDropdownOpen(!isParcelDropdownOpen);
+                                  setIsParcelDropdownOpen(true);
                                 }}
-                                className={`w-full p-2.5 sm:p-3 rounded-2xl border-2 transition flex items-center justify-between gap-2 shadow-xs text-left relative z-30 ${
-                                  isParcelDropdownOpen
-                                    ? 'bg-white dark:bg-slate-900 border-amber-500 ring-2 ring-amber-500/20'
-                                    : 'bg-white hover:bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 hover:border-amber-400'
-                                }`}
+                                className="w-full p-2.5 sm:p-3 rounded-2xl border-2 transition flex items-center justify-between gap-2 shadow-xs text-left bg-white hover:bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 hover:border-amber-400"
                               >
                                 <div className="flex items-center gap-2.5 min-w-0">
                                   <div className="w-8 h-8 rounded-xl bg-white border border-amber-500/30 text-amber-600 dark:text-amber-400 flex items-center justify-center text-base flex-shrink-0 shadow-xs">
@@ -1283,103 +1256,108 @@ export const CustomerApp: React.FC<CustomerAppProps> = ({
 
                                 <div className="flex items-center gap-2 flex-shrink-0">
                                   <span className="px-2 py-0.5 rounded-md bg-white border border-amber-300 text-amber-700 dark:text-amber-300 font-extrabold text-[10px] hidden xs:inline-block shadow-xs">
-                                    {isParcelDropdownOpen ? 'Close' : 'Select'}
+                                    Select
                                   </span>
                                   <div className="w-6 h-6 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-500 shadow-xs">
-                                    {isParcelDropdownOpen ? (
-                                      <ChevronUp className="w-4 h-4 text-amber-500" />
-                                    ) : (
-                                      <ChevronDown className="w-4 h-4 text-slate-500" />
-                                    )}
+                                    <ChevronDown className="w-4 h-4 text-slate-500" />
                                   </div>
                                 </div>
                               </button>
+                            </div>
+                          </div>
 
-                              {/* Custom Dropdown Menu with Details and Options */}
-                              {isParcelDropdownOpen && (
-                                <div className="absolute top-[102%] left-0 right-0 bg-white dark:bg-slate-900 border-2 border-amber-500/50 rounded-2xl shadow-2xl p-1.5 z-50 max-h-64 overflow-y-auto space-y-1 animate-in fade-in zoom-in-98 divide-y divide-slate-100 dark:divide-slate-800 backdrop-blur-md">
-                                  <div className="px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-slate-400 flex items-center justify-between">
-                                    <span>Select Parcel Type</span>
-                                    <span className="text-amber-600 dark:text-amber-400 font-bold">Max {currentParcelSpec.maxWeight} kg</span>
-                                  </div>
+                          <div className="space-y-2 rounded-2xl border border-amber-300 bg-amber-50/70 p-3 dark:border-amber-800 dark:bg-amber-950/20">
+                            <input
+                              ref={parcelPhotoInputRef}
+                              type="file"
+                              accept="image/*"
+                              capture="environment"
+                              multiple
+                              className="hidden"
+                              aria-label="Take or add parcel photos"
+                              onChange={async event => {
+                                const input = event.currentTarget;
+                                const files = Array.from(input.files || []);
+                                input.value = '';
+                                if (files.length === 0) return;
+                                if (files.some(file => !file.type.startsWith('image/'))) {
+                                  setParcelPhotoError('Please select valid parcel photos.');
+                                  return;
+                                }
 
-                                  <div className="pt-1 space-y-1">
-                                    {currentParcelSpec.types.map((pt) => {
-                                      const isSelected = currentParcelType === pt.label;
-                                      return (
-                                        <div
-                                          key={pt.label}
-                                          onClick={() => {
-                                            sounds.playPop();
-                                            setParcelTypes(prev => ({ ...prev, [selectedVehicleId]: pt.label }));
-                                            setIsParcelDropdownOpen(false);
-                                          }}
-                                          className={`p-2 rounded-xl flex items-center justify-between gap-2.5 cursor-pointer transition ${
-                                            isSelected
-                                              ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 font-black border border-amber-300/80 dark:border-amber-700/60 shadow-xs'
-                                              : 'hover:bg-slate-50 dark:hover:bg-slate-800/70 text-slate-800 dark:text-slate-200 font-semibold'
-                                          }`}
-                                        >
-                                          <div className="flex items-center gap-2.5 min-w-0">
-                                            <span className="w-7 h-7 rounded-lg bg-amber-500/10 flex items-center justify-center text-sm flex-shrink-0">
-                                              {pt.icon}
-                                            </span>
-                                            <div className="min-w-0">
-                                              <span className="text-xs truncate block">{pt.label}</span>
-                                              {pt.desc && (
-                                                <span className="text-[10px] text-slate-400 font-normal truncate block">
-                                                  {pt.desc}
-                                                </span>
-                                              )}
-                                            </div>
-                                          </div>
-                                          {isSelected ? (
-                                            <Check className="w-4 h-4 text-amber-600 dark:text-amber-400 flex-shrink-0" />
-                                          ) : (
-                                            <span className="text-[10px] text-slate-400 font-medium">Select</span>
-                                          )}
-                                        </div>
-                                      );
-                                    })}
-                                  </div>
+                                const readPhoto = (file: File) => new Promise<string>((resolve, reject) => {
+                                  const reader = new FileReader();
+                                  reader.onerror = () => reject(new Error('Could not read a parcel photo.'));
+                                  reader.onload = () => {
+                                    if (typeof reader.result === 'string') resolve(reader.result);
+                                    else reject(new Error('Could not load a parcel photo.'));
+                                  };
+                                  reader.readAsDataURL(file);
+                                });
 
-                                  {/* Custom Parcel Input */}
-                                  <div className="pt-2 px-1">
-                                    <div className="flex items-center gap-1.5 bg-white dark:bg-slate-800/80 p-1 rounded-xl border border-slate-200 dark:border-slate-700 shadow-xs">
-                                      <input
-                                        type="text"
-                                        value={customParcelInput}
-                                        onChange={(e) => setCustomParcelInput(e.target.value)}
-                                        onKeyDown={(e) => {
-                                          if (e.key === 'Enter' && customParcelInput.trim()) {
-                                            sounds.playSuccess();
-                                            setParcelTypes(prev => ({ ...prev, [selectedVehicleId]: customParcelInput.trim() }));
-                                            setCustomParcelInput('');
-                                            setIsParcelDropdownOpen(false);
-                                          }
-                                        }}
-                                        placeholder="Other / Custom parcel type..."
-                                        className="w-full bg-transparent px-2 text-xs text-slate-800 dark:text-white outline-none font-medium placeholder:text-slate-400"
+                                try {
+                                  const photos = await Promise.all(files.map(readPhoto));
+                                  setParcelPhotos(prev => [...prev, ...photos]);
+                                  setParcelPhotoError(null);
+                                } catch {
+                                  setParcelPhotoError('Could not read the selected parcel photos. Please try again.');
+                                }
+                              }}
+                            />
+                            <div className="flex items-center justify-between gap-3">
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-1.5 text-xs font-black text-slate-900 dark:text-white">
+                                  <Camera className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                                  Parcel photo <span className="text-rose-600">Required</span>
+                                </div>
+                                <p className="mt-0.5 text-[10px] text-slate-500">
+                                  Add one or more clear photos so the captain can identify your parcel.
+                                </p>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setParcelPhotoError(null);
+                                  parcelPhotoInputRef.current?.click();
+                                }}
+                                className="flex flex-shrink-0 items-center gap-1.5 rounded-xl bg-amber-500 px-3 py-2 text-xs font-black text-white transition hover:bg-amber-600"
+                              >
+                                <Camera className="h-3.5 w-3.5" />
+                                {parcelPhotos.length > 0 ? 'Add photos' : 'Take photo'}
+                              </button>
+                            </div>
+                            {parcelPhotos.length > 0 && (
+                              <div className="space-y-2">
+                                <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-700 dark:text-emerald-400">
+                                  <CheckCircle2 className="h-4 w-4" />
+                                  {parcelPhotos.length} photo{parcelPhotos.length === 1 ? '' : 's'} attached to delivery
+                                </div>
+                                <div className="flex flex-wrap gap-2">
+                                  {parcelPhotos.map((photo, index) => (
+                                    <div key={`${index}-${photo.slice(0, 32)}`} className="relative">
+                                      <img
+                                        src={photo}
+                                        alt={`Parcel photo ${index + 1}`}
+                                        className="h-16 w-16 rounded-lg object-cover"
                                       />
                                       <button
                                         type="button"
-                                        disabled={!customParcelInput.trim()}
-                                        onClick={() => {
-                                          if (!customParcelInput.trim()) return;
-                                          sounds.playSuccess();
-                                          setParcelTypes(prev => ({ ...prev, [selectedVehicleId]: customParcelInput.trim() }));
-                                          setCustomParcelInput('');
-                                          setIsParcelDropdownOpen(false);
-                                        }}
-                                        className="px-2.5 py-1 rounded-lg bg-amber-500 hover:bg-amber-600 disabled:opacity-40 text-white font-black text-[10px] transition flex-shrink-0"
+                                        onClick={() => setParcelPhotos(prev => prev.filter((_, photoIndex) => photoIndex !== index))}
+                                        className="absolute -right-1.5 -top-1.5 rounded-full bg-slate-900 p-1 text-white"
+                                        aria-label={`Remove parcel photo ${index + 1}`}
                                       >
-                                        Set
+                                        <X className="h-3 w-3" />
                                       </button>
                                     </div>
-                                  </div>
+                                  ))}
                                 </div>
-                              )}
-                            </div>
+                              </div>
+                            )}
+                            {parcelPhotoError && (
+                              <p role="alert" className="text-xs font-semibold text-rose-600 dark:text-rose-400">
+                                {parcelPhotoError}
+                              </p>
+                            )}
                           </div>
 
                           {/* Weight Selector & Limit Validation (Deleted for Bike) */}
@@ -1556,6 +1534,36 @@ export const CustomerApp: React.FC<CustomerAppProps> = ({
                           </div>
                         </div>
                       )}
+                    </div>
+
+                    {/* Prominent Highway Carpool Quick Access Banner */}
+                    <div
+                      onClick={() => {
+                        sounds.playSuccess();
+                        setCustomerTab('CARPOOL');
+                      }}
+                      className="p-3 bg-gradient-to-r from-emerald-600 via-teal-600 to-slate-900 text-white rounded-2xl shadow-md border border-emerald-500/40 flex items-center justify-between cursor-pointer hover:shadow-lg hover:scale-[1.01] transition group"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-10 h-10 rounded-xl bg-white/15 backdrop-blur-md flex items-center justify-center text-lg flex-shrink-0 border border-white/20 shadow-inner">
+                          🚗
+                        </div>
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="text-[10px] font-black uppercase tracking-wider bg-emerald-400 text-slate-950 px-2 py-0.5 rounded-full shadow-2xs">
+                              HIGHWAY CARPOOL
+                            </span>
+                            <span className="text-[10px] text-emerald-200 font-bold">Warangal ⇄ Hyderabad Corridor</span>
+                          </div>
+                          <p className="text-xs font-black text-white mt-0.5 truncate">
+                            Share rides, pick intermediate stops & save up to 70% • From ₹80
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1 text-xs font-black text-emerald-300 group-hover:translate-x-1 transition flex-shrink-0 pl-2">
+                        <span>Open Hub</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </div>
                     </div>
 
                   </div>
@@ -1999,6 +2007,10 @@ export const CustomerApp: React.FC<CustomerAppProps> = ({
                         onUpdateOrder(activeOrder.id, { status: 'COMPLETED' });
                         setPickup('');
                         setDrop('');
+                        setDropQuery('');
+                        setPickupPlace(null);
+                        setDropPlace(null);
+                        setLiveRoadRoute(null);
                         setDistanceKm(0);
                         setDiscountAmount(0);
                         setDriverTip(0);
@@ -2092,6 +2104,10 @@ export const CustomerApp: React.FC<CustomerAppProps> = ({
                         onUpdateOrder(activeOrder.id, { status: 'COMPLETED' });
                         setPickup('');
                         setDrop('');
+                        setDropQuery('');
+                        setPickupPlace(null);
+                        setDropPlace(null);
+                        setLiveRoadRoute(null);
                         setDistanceKm(0);
                         setDiscountAmount(0);
                         setDriverTip(0);
@@ -2256,18 +2272,34 @@ export const CustomerApp: React.FC<CustomerAppProps> = ({
                       </div>
                       <div className="flex justify-between items-center pt-2 border-t border-slate-200 dark:border-slate-700/60 text-[11px]">
                         <span className="text-slate-400">{trip.vehicleTier} • {trip.driverName}</span>
-                        <button 
-                          onClick={() => {
-                            setPickup(trip.pickup);
-                            setDrop(trip.drop);
-                            recalcDistance(trip.pickup, trip.drop);
-                            setCustomerTab('BOOKING');
-                            sounds.playPop();
-                          }}
-                          className="font-bold text-brand-blue hover:underline"
-                        >
-                          Rebook Route →
-                        </button>
+                        <div className="flex items-center gap-3">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              sounds.playTap();
+                              setSelectedTransaction(trip);
+                            }}
+                            className="font-bold text-slate-600 dark:text-slate-300 hover:text-brand-blue"
+                          >
+                            Transaction details
+                          </button>
+                          <button
+                            onClick={() => {
+                              setPickup('');
+                              setDrop('');
+                              setDropQuery(trip.drop);
+                              setPickupPlace(null);
+                              setDropPlace(null);
+                              setLiveRoadRoute(null);
+                              setDistanceKm(0);
+                              setCustomerTab('BOOKING');
+                              sounds.playPop();
+                            }}
+                            className="font-bold text-brand-blue hover:underline"
+                          >
+                            Rebook →
+                          </button>
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -2428,54 +2460,34 @@ export const CustomerApp: React.FC<CustomerAppProps> = ({
              ==================================================== */}
           {customerTab === 'BOOKING' && !activeOrder && (
             <div className="p-3 bg-white/98 backdrop-blur-md border-t border-slate-200/90 shadow-[0_-8px_30px_rgba(0,0,0,0.1)] z-30 flex-shrink-0 space-y-2">
-              {/* Promo Coupon Box (Always Visible & Accessible) */}
-              <div className="flex gap-2">
-                <div className="relative flex-1 min-w-0">
-                  <Tag className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 flex-shrink-0" />
-                  <input 
-                    type="text"
-                    value={promoCode}
-                    onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
-                    placeholder="Coupon (e.g. ZALDI50)"
-                    className="w-full pl-8 pr-2 py-2 rounded-xl bg-white border border-slate-200 text-xs font-semibold text-slate-800 uppercase placeholder-slate-400 outline-none focus:border-brand-blue focus:ring-1 focus:ring-blue-500/20 shadow-xs"
-                  />
+              <button
+                type="button"
+                onClick={() => {
+                  sounds.playTap();
+                  setPaymentsSheetPage('PAYMENT');
+                  setShowPaymentsSheet(true);
+                }}
+                className="w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl bg-white border border-slate-200 text-left shadow-xs hover:border-blue-300 transition"
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  <Wallet className="w-4 h-4 text-brand-blue flex-shrink-0" />
+                  <span className="text-xs font-black text-slate-800">Payments &amp; Coupons</span>
+                  <span className="text-[10px] font-semibold text-slate-500 truncate">
+                    {paymentMethod === 'WALLET'
+                      ? `Zaldi Wallet • ₹${Math.round(walletBalance)}`
+                      : paymentMethod === 'UPI'
+                      ? `UPI • ${upiApp}`
+                      : 'Cash after ride'}
+                  </span>
                 </div>
-                <button
-                  onClick={handleApplyPromo}
-                  className="px-3.5 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 text-xs font-bold transition flex-shrink-0 active:scale-95 shadow-xs"
-                >
-                  Apply
-                </button>
-              </div>
-
-              {promoMessage && (
-                <div className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 px-1 truncate">
-                  {promoMessage}
+                <div className="flex items-center gap-1 flex-shrink-0">
+                  {discountAmount > 0 && <span className="text-[10px] font-black text-emerald-700">Coupon applied</span>}
+                  <ChevronRight className="w-4 h-4 text-slate-400" />
                 </div>
-              )}
-
-              {/* Payment Method Selector (Always Visible & Accessible) */}
-              <div className="flex items-center justify-between gap-1 p-1.5 sm:p-2 rounded-xl bg-white border border-slate-200 text-xs shadow-xs">
-                <span className="font-semibold text-slate-500 text-[11px] flex-shrink-0">Payment:</span>
-                <div className="flex gap-1 overflow-x-auto no-scrollbar">
-                  {(['WALLET', 'UPI', 'CASH'] as const).map(pm => (
-                    <button
-                      key={pm}
-                      onClick={() => setPaymentMethod(pm)}
-                      className={`px-2 py-1 rounded-lg text-[10px] whitespace-nowrap bg-white transition flex items-center gap-1 flex-shrink-0 ${
-                        paymentMethod === pm
-                          ? 'border-2 border-brand-blue text-brand-blue font-black shadow-xs ring-1 ring-blue-500/20'
-                          : 'border border-slate-200 text-slate-600 hover:border-slate-300 hover:text-slate-800 font-semibold'
-                      }`}
-                    >
-                      {pm === 'WALLET' ? `Wallet (₹${Math.round(walletBalance)})` : pm}
-                    </button>
-                  ))}
-                </div>
-              </div>
+              </button>
 
               {/* Itemized Fare Summary Strip with Breakdown Trigger */}
-              {pickup && drop && distanceKm > 0 && (
+              {hasSelectedRoute && distanceKm > 0 && (
                 <div 
                   onClick={() => { sounds.playTap(); setShowFareBreakdown(true); }}
                   className="flex items-center justify-between px-3 py-1.5 bg-blue-50/80 hover:bg-blue-100/80 border border-blue-200/90 rounded-xl text-xs cursor-pointer transition shadow-2xs group"
@@ -2502,33 +2514,53 @@ export const CustomerApp: React.FC<CustomerAppProps> = ({
               {/* Confirm Delivery / Ride / Enter Pickup & Drop Button */}
               <button 
                 onClick={() => {
-                  if (!pickup || !drop) {
+                  if (!pickupPlace) {
                     sounds.playTap();
+                    setLocationToast('Confirm your pickup using the map pin.');
+                    window.setTimeout(() => setLocationToast(null), 2500);
+                  } else if (!dropPlace) {
+                    sounds.playTap();
+                    setActiveInput('drop');
+                    setSearchQuery(dropQuery);
                     dropInputRef.current?.focus();
                     drawerScrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
-                  } else if (!isWeightExceeded) {
-                    handleConfirmBooking();
+                  } else if (!activeInput && hasSelectedRoute && !isWeightExceeded) {
+                    if (currentMode === 'PARCEL' && parcelPhotos.length === 0) {
+                      setParcelPhotoError('At least one parcel photo is required before booking.');
+                      parcelPhotoInputRef.current?.click();
+                    } else {
+                      handleConfirmBooking();
+                    }
                   }
                 }}
-                disabled={Boolean(pickup && drop && isWeightExceeded)}
+                disabled={Boolean((pickupPlace && dropPlace && isWeightExceeded) || isLoadingRoadRoute)}
                 className={`w-full py-3 sm:py-3.5 px-3 rounded-2xl font-black text-xs sm:text-sm shadow-xl flex justify-center items-center gap-2 transition-all active:scale-98 ${
-                  !pickup || !drop
+                  !pickupPlace || !dropPlace
                     ? 'bg-brand-blue hover:bg-blue-600 text-white shadow-blue-500/25 ring-2 ring-blue-500/20'
-                    : isWeightExceeded
+                    : isWeightExceeded || roadRouteError || !hasSelectedRoute
                     ? 'bg-rose-500/20 text-rose-500 border border-rose-500/40 cursor-not-allowed shadow-none'
                     : currentMode === 'PARCEL'
                     ? 'bg-amber-500 hover:bg-amber-600 text-white shadow-amber-500/30'
                     : 'bg-brand-blue text-white shadow-blue-600/30 hover:bg-blue-600'
                 }`}
               >
-                <Navigation className="w-4 h-4 flex-shrink-0" />
+                {currentMode === 'PARCEL' && parcelPhotos.length === 0
+                  ? <Camera className="w-4 h-4 flex-shrink-0" />
+                  : <Navigation className="w-4 h-4 flex-shrink-0" />}
                 <span className="truncate">
-                  {!drop
-                    ? 'Enter Destination Point'
-                    : !pickup
-                    ? 'Enter Pickup Location'
+                  {!pickupPlace
+                    ? 'Confirm Pickup on Map'
+                    : !dropPlace
+                    ? 'Select Destination'
+                    : isLoadingRoadRoute
+                    ? 'Calculating Road Route…'
+                    : roadRouteError || !hasSelectedRoute
+                    ? 'Road Route Unavailable'
                     : isWeightExceeded 
                     ? `Weight Exceeded (${weightExceededMessage})`
+                    : currentMode === 'PARCEL'
+                    && parcelPhotos.length === 0
+                    ? 'Take Required Parcel Photo'
                     : currentMode === 'PARCEL'
                     ? `Confirm ${activeTierConfig.name} Delivery • ₹${finalCalculatedFare}`
                     : `Confirm ${activeTierConfig.name} Ride • ₹${finalCalculatedFare}`}
@@ -2645,6 +2677,427 @@ export const CustomerApp: React.FC<CustomerAppProps> = ({
           order={activeOrder} 
           onClose={() => setShowSafety(false)} 
         />
+      )}
+
+      {isParcelDropdownOpen && createPortal(
+        <div
+          className="fixed inset-0 z-[160] flex items-center justify-center bg-slate-950/65 p-4 backdrop-blur-sm animate-in fade-in"
+          onClick={() => setIsParcelDropdownOpen(false)}
+        >
+          <section
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="parcel-type-dialog-title"
+            className="flex max-h-[85dvh] w-full max-w-md flex-col overflow-hidden rounded-3xl border border-amber-500/30 bg-white shadow-2xl dark:border-slate-700 dark:bg-slate-900 animate-in zoom-in-95"
+            onClick={event => event.stopPropagation()}
+          >
+            <header className="flex items-center justify-between border-b border-slate-200 p-4 dark:border-slate-700">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                  <Package className="h-5 w-5" />
+                </div>
+                <div>
+                  <h2 id="parcel-type-dialog-title" className="font-black text-slate-900 dark:text-white">
+                    Select Parcel Type
+                  </h2>
+                  <p className="text-xs text-slate-500">
+                    {selectedVehicle.name} · Max {currentParcelSpec.maxWeight} kg
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsParcelDropdownOpen(false)}
+                className="rounded-xl p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-800 dark:hover:text-white"
+                aria-label="Close parcel type selection"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </header>
+
+            <div className="min-h-0 space-y-1 overflow-y-auto p-3">
+              {currentParcelSpec.types.map(type => {
+                const isSelected = currentParcelType === type.label;
+                return (
+                  <button
+                    type="button"
+                    key={type.label}
+                    onClick={() => {
+                      sounds.playPop();
+                      setParcelTypes(prev => ({ ...prev, [selectedVehicleId]: type.label }));
+                      setIsParcelDropdownOpen(false);
+                    }}
+                    className={`flex w-full items-center justify-between gap-3 rounded-2xl border p-3 text-left transition ${
+                      isSelected
+                        ? 'border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-300'
+                        : 'border-transparent text-slate-800 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800'
+                    }`}
+                  >
+                    <span className="flex min-w-0 items-center gap-3">
+                      <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-amber-500/10 text-lg">
+                        {type.icon}
+                      </span>
+                      <span className="min-w-0">
+                        <span className="block text-sm font-bold">{type.label}</span>
+                        {type.desc && <span className="mt-0.5 block text-xs text-slate-500">{type.desc}</span>}
+                      </span>
+                    </span>
+                    {isSelected && <Check className="h-5 w-5 flex-shrink-0 text-amber-600 dark:text-amber-400" />}
+                  </button>
+                );
+              })}
+            </div>
+
+            <footer className="border-t border-slate-200 p-4 dark:border-slate-700">
+              <label htmlFor="custom-parcel-type" className="mb-2 block text-xs font-bold text-slate-600 dark:text-slate-300">
+                Or enter a custom parcel type
+              </label>
+              <div className="flex items-center gap-2">
+                <input
+                  id="custom-parcel-type"
+                  type="text"
+                  value={customParcelInput}
+                  onChange={event => setCustomParcelInput(event.target.value)}
+                  onKeyDown={event => {
+                    if (event.key === 'Enter' && customParcelInput.trim()) {
+                      sounds.playSuccess();
+                      setParcelTypes(prev => ({ ...prev, [selectedVehicleId]: customParcelInput.trim() }));
+                      setCustomParcelInput('');
+                      setIsParcelDropdownOpen(false);
+                    }
+                  }}
+                  placeholder="Custom parcel type..."
+                  className="min-w-0 flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none placeholder:text-slate-400 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                />
+                <button
+                  type="button"
+                  disabled={!customParcelInput.trim()}
+                  onClick={() => {
+                    if (!customParcelInput.trim()) return;
+                    sounds.playSuccess();
+                    setParcelTypes(prev => ({ ...prev, [selectedVehicleId]: customParcelInput.trim() }));
+                    setCustomParcelInput('');
+                    setIsParcelDropdownOpen(false);
+                  }}
+                  className="rounded-xl bg-amber-500 px-4 py-2.5 text-sm font-black text-white transition hover:bg-amber-600 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  Set
+                </button>
+              </div>
+            </footer>
+          </section>
+        </div>,
+        document.body
+      )}
+
+      {selectedTransaction && (
+        <div
+          className="fixed inset-0 z-[80] flex items-end justify-center bg-slate-950/65 p-0 backdrop-blur-sm animate-in fade-in sm:items-center sm:p-4"
+          onClick={() => setSelectedTransaction(null)}
+        >
+          <section
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="transaction-details-title"
+            className="w-full max-w-md overflow-hidden rounded-t-3xl border border-slate-200 bg-white shadow-2xl dark:border-slate-700 dark:bg-slate-900 sm:rounded-3xl"
+            onClick={event => event.stopPropagation()}
+          >
+            <header className="flex items-center justify-between border-b border-slate-200 px-5 py-4 dark:border-slate-700">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-brand-blue dark:bg-blue-950/60">
+                  <Receipt className="h-5 w-5" />
+                </div>
+                <div>
+                  <h2 id="transaction-details-title" className="font-black text-slate-900 dark:text-white">
+                    Transaction details
+                  </h2>
+                  <p className="text-xs text-slate-500">Ride receipt</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedTransaction(null)}
+                className="rounded-xl p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-800 dark:hover:text-white"
+                aria-label="Close transaction details"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </header>
+
+            <div className="max-h-[70dvh] space-y-5 overflow-y-auto p-5">
+              <div className="rounded-2xl bg-emerald-50 p-4 text-center dark:bg-emerald-950/40">
+                <span className="text-[10px] font-black uppercase tracking-widest text-emerald-700 dark:text-emerald-400">
+                  Amount paid
+                </span>
+                <div className="mt-1 text-3xl font-black text-slate-900 dark:text-white">
+                  ₹{selectedTransaction.fare}
+                </div>
+                <span className="mt-2 inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-[10px] font-bold text-emerald-700 dark:bg-slate-900 dark:text-emerald-400">
+                  <CheckCircle2 className="h-3 w-3" />
+                  {selectedTransaction.status}
+                </span>
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex items-center justify-between gap-4 border-b border-slate-100 pb-3 text-sm dark:border-slate-800">
+                  <span className="text-slate-500">Transaction reference</span>
+                  <span className="font-mono text-xs font-bold text-slate-900 dark:text-white">{selectedTransaction.id}</span>
+                </div>
+                <div className="flex items-center justify-between gap-4 border-b border-slate-100 pb-3 text-sm dark:border-slate-800">
+                  <span className="text-slate-500">Date</span>
+                  <span className="text-right font-semibold text-slate-900 dark:text-white">{selectedTransaction.date}</span>
+                </div>
+                <div className="flex items-center justify-between gap-4 border-b border-slate-100 pb-3 text-sm dark:border-slate-800">
+                  <span className="text-slate-500">Vehicle</span>
+                  <span className="text-right font-semibold text-slate-900 dark:text-white">{selectedTransaction.vehicleTier}</span>
+                </div>
+                <div className="flex items-center justify-between gap-4 border-b border-slate-100 pb-3 text-sm dark:border-slate-800">
+                  <span className="text-slate-500">Captain</span>
+                  <span className="text-right font-semibold text-slate-900 dark:text-white">{selectedTransaction.driverName}</span>
+                </div>
+                <div className="space-y-2 border-b border-slate-100 pb-3 text-sm dark:border-slate-800">
+                  <div className="flex items-start gap-2">
+                    <span className="mt-1.5 h-2 w-2 flex-shrink-0 rounded-full bg-emerald-500" />
+                    <span className="text-slate-700 dark:text-slate-200">{selectedTransaction.pickup}</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="mt-1.5 h-2 w-2 flex-shrink-0 rounded-full bg-rose-500" />
+                    <span className="text-slate-700 dark:text-slate-200">{selectedTransaction.drop}</span>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-slate-500">Trip rating</span>
+                  <span className="flex items-center gap-1 font-bold text-amber-500">
+                    <Star className="h-4 w-4 fill-amber-400" />
+                    {selectedTransaction.rating}/5
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <footer className="border-t border-slate-200 p-4 dark:border-slate-700">
+              <button
+                type="button"
+                onClick={() => setSelectedTransaction(null)}
+                className="w-full rounded-xl bg-brand-blue py-3 text-sm font-black text-white transition hover:bg-blue-600"
+              >
+                Done
+              </button>
+            </footer>
+          </section>
+        </div>
+      )}
+
+      {showPaymentsSheet && (
+        <div className="fixed inset-0 z-[70] flex items-end justify-center bg-slate-950/65 backdrop-blur-sm animate-in fade-in">
+          <section
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="payments-sheet-title"
+            className="flex h-[100svh] max-h-[100svh] w-full max-w-lg flex-col overflow-hidden rounded-t-3xl bg-slate-50 shadow-2xl animate-in slide-in-from-bottom-4"
+          >
+            <header className="flex flex-shrink-0 items-center gap-3 border-b border-slate-200 bg-white px-4 pb-4 pt-[calc(1rem+env(safe-area-inset-top,0px))]">
+              <button
+                type="button"
+                onClick={() => {
+                  sounds.playTap();
+                  if (paymentsSheetPage === 'COUPONS') setPaymentsSheetPage('PAYMENT');
+                  else setShowPaymentsSheet(false);
+                }}
+                className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-700 transition hover:bg-slate-200"
+                aria-label={paymentsSheetPage === 'COUPONS' ? 'Back to payments' : 'Back to booking'}
+              >
+                <ArrowLeft className="h-5 w-5" />
+              </button>
+              <div className="min-w-0">
+                <h2 id="payments-sheet-title" className="text-base font-black text-slate-900">
+                  {paymentsSheetPage === 'COUPONS' ? 'Available Coupons' : 'Payments & Coupons'}
+                </h2>
+                <p className="text-xs text-slate-500">
+                  {paymentsSheetPage === 'COUPONS' ? 'Choose an offer for your ride' : 'Choose how you want to pay'}
+                </p>
+              </div>
+            </header>
+
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))]">
+              {paymentsSheetPage === 'PAYMENT' ? (
+                <div className="space-y-5">
+                  <section className="space-y-3">
+                    <div>
+                      <h3 className="text-sm font-black text-slate-900">Apply a coupon</h3>
+                      <p className="mt-0.5 text-xs text-slate-500">Save on your next ride with a promo code.</p>
+                    </div>
+                    <div className="flex gap-2">
+                      <div className="relative min-w-0 flex-1">
+                        <Tag className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                        <input
+                          type="text"
+                          value={promoCode}
+                          onChange={event => {
+                            setPromoCode(event.target.value.toUpperCase());
+                            setPromoMessage(null);
+                          }}
+                          onKeyDown={event => {
+                            if (event.key === 'Enter') handleApplyPromo();
+                          }}
+                          placeholder="Enter promo code"
+                          aria-label="Promo code"
+                          className="w-full rounded-xl border border-slate-200 bg-white py-3 pl-10 pr-3 text-sm font-bold uppercase text-slate-900 outline-none transition placeholder:normal-case placeholder:font-medium placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/15"
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleApplyPromo()}
+                        className="rounded-xl bg-brand-blue px-4 text-sm font-black text-white transition hover:bg-blue-600 active:scale-95"
+                      >
+                        Apply
+                      </button>
+                    </div>
+                    {promoMessage && (
+                      <p role={promoMessage.startsWith('Coupon ') ? 'status' : 'alert'} className={`text-xs font-bold ${promoMessage.startsWith('Coupon ') ? 'text-emerald-700' : 'text-rose-600'}`}>
+                        {promoMessage}
+                      </p>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        sounds.playTap();
+                        setPaymentsSheetPage('COUPONS');
+                      }}
+                      className="text-xs font-black text-brand-blue underline underline-offset-2"
+                    >
+                      View available coupons
+                    </button>
+                    {discountAmount > 0 && (
+                      <div className="flex items-center justify-between rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs">
+                        <span className="font-bold text-emerald-800">{promoCode} applied</span>
+                        <span className="font-black text-emerald-800">−₹{discountAmount}</span>
+                      </div>
+                    )}
+                  </section>
+
+                  <section role="radiogroup" aria-label="Payment method" className="space-y-3">
+                    <h3 className="text-sm font-black text-slate-900">Payment method</h3>
+
+                    <button
+                      type="button"
+                      role="radio"
+                      aria-checked={paymentMethod === 'WALLET'}
+                      onClick={() => handleSelectPaymentMethod('WALLET')}
+                      className={`w-full rounded-2xl border p-4 text-left transition ${paymentMethod === 'WALLET' ? 'border-blue-500 bg-blue-50/70 ring-2 ring-blue-500/10' : 'border-slate-200 bg-white hover:border-slate-300'}`}
+                    >
+                      <span className="flex items-center justify-between gap-3">
+                        <span className="flex items-center gap-3">
+                          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-100 text-brand-blue">
+                            <Wallet className="h-5 w-5" />
+                          </span>
+                          <span>
+                            <span className="block text-sm font-black text-slate-900">Zaldi Wallet</span>
+                            <span className="mt-0.5 block text-xs font-semibold text-slate-500">Available balance</span>
+                          </span>
+                        </span>
+                        <span className="flex items-center gap-2">
+                          <span className="text-sm font-black text-slate-900">₹{walletBalance.toFixed(0)}</span>
+                          <span className={`h-5 w-5 rounded-full border-2 ${paymentMethod === 'WALLET' ? 'border-blue-600 bg-blue-600 ring-2 ring-white ring-inset' : 'border-slate-300'}`} />
+                        </span>
+                      </span>
+                    </button>
+
+                    <div className={`rounded-2xl border p-4 transition ${paymentMethod === 'UPI' ? 'border-blue-500 bg-blue-50/70 ring-2 ring-blue-500/10' : 'border-slate-200 bg-white'}`}>
+                      <div className="space-y-2">
+                        <div className="pb-1">
+                          <div className="text-xs font-black text-slate-900">UPI</div>
+                          <div className="mt-0.5 text-[11px] font-semibold text-slate-500">Choose your UPI app</div>
+                        </div>
+                        <button
+                          type="button"
+                          role="radio"
+                          aria-checked={paymentMethod === 'UPI' && upiApp === 'PhonePe'}
+                          onClick={() => {
+                            handleSelectPaymentMethod('UPI', 'PhonePe');
+                          }}
+                          className={`flex w-full items-center justify-between rounded-xl border px-3 py-2.5 text-left ${paymentMethod === 'UPI' && upiApp === 'PhonePe' ? 'border-violet-300 bg-white' : 'border-transparent hover:bg-white/70'}`}
+                        >
+                          <span className="flex items-center gap-2.5">
+                            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-100 text-sm font-black text-violet-700">P</span>
+                            <span className="text-xs font-black text-slate-800">PhonePe</span>
+                          </span>
+                          <span className={`h-4 w-4 rounded-full border-2 ${paymentMethod === 'UPI' && upiApp === 'PhonePe' ? 'border-blue-600 bg-blue-600 ring-2 ring-white ring-inset' : 'border-slate-300'}`} />
+                        </button>
+
+                        <button
+                          type="button"
+                          role="radio"
+                          aria-checked={paymentMethod === 'UPI' && upiApp === 'Google Pay'}
+                          onClick={() => handleSelectPaymentMethod('UPI', 'Google Pay')}
+                          className={`flex w-full items-center justify-between rounded-xl border px-3 py-2.5 text-left ${paymentMethod === 'UPI' && upiApp === 'Google Pay' ? 'border-blue-300 bg-white' : 'border-transparent hover:bg-white/70'}`}
+                        >
+                          <span className="flex items-center gap-2.5">
+                            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-sm font-black text-blue-700">G</span>
+                            <span className="text-xs font-black text-slate-800">Google Pay</span>
+                          </span>
+                          <span className={`h-4 w-4 rounded-full border-2 ${paymentMethod === 'UPI' && upiApp === 'Google Pay' ? 'border-blue-600 bg-blue-600 ring-2 ring-white ring-inset' : 'border-slate-300'}`} />
+                        </button>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      role="radio"
+                      aria-checked={paymentMethod === 'CASH'}
+                      onClick={() => handleSelectPaymentMethod('CASH')}
+                      className={`w-full rounded-2xl border p-4 text-left transition ${paymentMethod === 'CASH' ? 'border-blue-500 bg-blue-50/70 ring-2 ring-blue-500/10' : 'border-slate-200 bg-white hover:border-slate-300'}`}
+                    >
+                      <span className="flex items-center justify-between gap-3">
+                        <span className="flex items-center gap-3">
+                          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 text-lg">₹</span>
+                          <span>
+                            <span className="block text-sm font-black text-slate-900">Cash</span>
+                            <span className="mt-0.5 block text-xs font-semibold text-slate-500">Select cash payment after the ride</span>
+                          </span>
+                        </span>
+                        <span className={`h-5 w-5 rounded-full border-2 ${paymentMethod === 'CASH' ? 'border-blue-600 bg-blue-600 ring-2 ring-white ring-inset' : 'border-slate-300'}`} />
+                      </span>
+                    </button>
+                  </section>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {[
+                    { code: 'ZALDI50', value: '₹50 OFF', title: 'Ride more, save more', detail: 'Get ₹50 off your fare.' },
+                    { code: 'SAVE50', value: '₹50 OFF', title: 'A little ride bonus', detail: 'Get ₹50 off your fare.' },
+                    { code: 'FIRST', value: '₹75 OFF', title: 'First ride offer', detail: 'Get ₹75 off your fare.' }
+                  ].map(coupon => (
+                    <div key={coupon.code} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <div className="text-sm font-black text-slate-900">{coupon.title}</div>
+                          <div className="mt-1 text-xs text-slate-500">{coupon.detail}</div>
+                        </div>
+                        <span className="rounded-lg bg-emerald-50 px-2 py-1 text-xs font-black text-emerald-700">{coupon.value}</span>
+                      </div>
+                      <div className="mt-3 flex items-center justify-between border-t border-dashed border-slate-200 pt-3">
+                        <span className="rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-black tracking-wide text-slate-800">{coupon.code}</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setPromoCode(coupon.code);
+                            handleApplyPromo(coupon.code);
+                            setPaymentsSheetPage('PAYMENT');
+                          }}
+                          className="text-xs font-black text-brand-blue"
+                        >
+                          Apply
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+          </section>
+        </div>
       )}
 
       {/* =========================================================================

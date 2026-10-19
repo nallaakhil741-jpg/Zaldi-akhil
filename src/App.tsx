@@ -3,16 +3,16 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { lazy, Suspense, useState, useEffect } from 'react';
 import { 
   AppRole, Driver, RideOrder, TripMessage, CustomerTab 
 } from './types';
 import { INITIAL_DRIVERS } from './services/mockData';
 import { CustomerApp } from './components/CustomerApp';
-import { CaptainApp } from './components/CaptainApp';
-import { AdminApp } from './components/AdminApp';
-import { FleetTelematicsGIS } from './components/FleetTelematicsGIS';
-import { ArchitecturalDepotViewer } from './components/ArchitecturalDepotViewer';
+const CaptainApp = lazy(() => import('./components/CaptainApp').then(({ CaptainApp }) => ({ default: CaptainApp })));
+const AdminApp = lazy(() => import('./components/AdminApp').then(({ AdminApp }) => ({ default: AdminApp })));
+const FleetTelematicsGIS = lazy(() => import('./components/FleetTelematicsGIS').then(({ FleetTelematicsGIS }) => ({ default: FleetTelematicsGIS })));
+const ArchitecturalDepotViewer = lazy(() => import('./components/ArchitecturalDepotViewer').then(({ ArchitecturalDepotViewer }) => ({ default: ArchitecturalDepotViewer })));
 import { sounds } from './services/audio';
 import { tripChatBroadcaster } from './services/tripChatService';
 import { 
@@ -129,7 +129,7 @@ export default function App() {
   };
 
   return (
-    <div className="w-full h-full min-h-[100dvh] bg-white text-slate-900 flex flex-col selection:bg-brand-blue selection:text-white overflow-x-hidden">
+    <div className="w-full h-full min-h-[100svh] bg-white text-slate-900 flex flex-col selection:bg-brand-blue selection:text-white overflow-x-hidden">
       
       {/* Top Universal App Navigation Header (Desktop / Large Screens Only) */}
       <header className="hidden lg:block sticky top-0 z-[120] bg-white/95 backdrop-blur-xl border-b border-slate-200 px-4 sm:px-8 py-3.5 shadow-xs">

@@ -10,6 +10,7 @@
 import { RoutePoint } from '../types';
 
 export type RoutingEngineType = 'GOOGLE_MAPS_ROUTES_API' | 'OSRM';
+export const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || 'AIzaSyCnHLYkI2PlRGEwOD6OipOl3kA7AyfDyp8';
 
 export interface RouteStepInfo {
   instruction: string;
@@ -291,7 +292,7 @@ export async function fetchGoogleMapsRoutesApi(
   origin: GeoLocationCoord,
   dest: GeoLocationCoord
 ): Promise<RealRoadRouteResult> {
-  const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || 'AIzaSyCnHLYkI2PlRGEwOD6OipOl3kA7AyfDyp8';
+  const apiKey = GOOGLE_MAPS_API_KEY;
   
   // Prefer server proxy /api/google-routes in Vite to bypass browser CORS; fallback to direct
   const endpoint = '/api/google-routes/directions/v2:computeRoutes';
@@ -400,10 +401,16 @@ export async function fetchGoogleMapsRoutesApi(
 export async function getRealRoadRoute(
   pickupAddress: string,
   dropAddress: string,
-  preferredEngine: RoutingEngineType = 'GOOGLE_MAPS_ROUTES_API'
+  preferredEngine: RoutingEngineType = 'GOOGLE_MAPS_ROUTES_API',
+  pickupCoordinates?: Pick<GeoLocationCoord, 'lat' | 'lng'>,
+  dropCoordinates?: Pick<GeoLocationCoord, 'lat' | 'lng'>
 ): Promise<RealRoadRouteResult> {
-  const origin = resolveAddressToGeoCoord(pickupAddress);
-  const dest = resolveAddressToGeoCoord(dropAddress);
+  const origin = pickupCoordinates
+    ? { ...pickupCoordinates, name: pickupAddress }
+    : resolveAddressToGeoCoord(pickupAddress);
+  const dest = dropCoordinates
+    ? { ...dropCoordinates, name: dropAddress }
+    : resolveAddressToGeoCoord(dropAddress);
 
   if (preferredEngine === 'GOOGLE_MAPS_ROUTES_API') {
     try {

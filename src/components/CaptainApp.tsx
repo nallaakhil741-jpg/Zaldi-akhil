@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   Power, ShieldCheck, Star, Navigation, MapPin, 
   DollarSign, CheckCircle2, AlertCircle, Phone, 
-  Radio, TrendingUp, Award, Clock, ArrowRight, MessageSquare
+  Radio, TrendingUp, Award, Clock, ArrowRight, MessageSquare, Package
 } from 'lucide-react';
 import { Driver, RideOrder } from '../types';
 import { sounds } from '../services/audio';
@@ -197,6 +197,27 @@ export const CaptainApp: React.FC<CaptainAppProps> = ({
                   <span className="text-[11px] text-slate-400 font-semibold">Trip distance: {incomingOrder.distanceKm} km</span>
                 </div>
               </div>
+              {incomingOrder.serviceMode === 'PARCEL' && incomingOrder.parcelPhotos && incomingOrder.parcelPhotos.length > 0 && (
+                <div className="flex items-start gap-3">
+                  <Package className="w-5 h-5 flex-shrink-0 text-amber-400" />
+                  <div>
+                    <span className="text-[10px] font-bold uppercase text-slate-400">Parcel photo</span>
+                    <div className="mt-1 flex flex-wrap gap-2">
+                      {incomingOrder.parcelPhotos.map((photo, index) => (
+                        <img
+                          key={`${index}-${photo.slice(0, 32)}`}
+                          src={photo}
+                          alt={`Customer parcel photo ${index + 1}: ${incomingOrder.parcelType || 'delivery item'}`}
+                          className="h-24 w-24 rounded-xl border border-amber-500/30 object-cover"
+                        />
+                      ))}
+                    </div>
+                    <span className="mt-1 block text-[11px] font-semibold text-amber-300">
+                      {incomingOrder.parcelType} · {incomingOrder.parcelWeightKg} kg · {incomingOrder.parcelPhotos.length} photo{incomingOrder.parcelPhotos.length === 1 ? '' : 's'}
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="flex flex-col justify-center items-center sm:items-end bg-slate-950/60 rounded-2xl p-4 border border-blue-500/20">

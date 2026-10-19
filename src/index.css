@@ -11,8 +11,8 @@
 
   html, body, #root {
     width: 100%;
-    min-height: 100dvh;
-    height: 100dvh;
+    min-height: 100svh;
+    height: 100svh;
     margin: 0;
     padding: 0;
     overflow-x: hidden;
@@ -49,6 +49,23 @@
 
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+.overflow-x-auto {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  scrollbar-color: #94a3b8 transparent;
+  scrollbar-width: thin;
+  touch-action: pan-x pan-y;
+}
+
+.overflow-x-auto::-webkit-scrollbar {
+  height: 4px;
+}
+
+.overflow-x-auto::-webkit-scrollbar-thumb {
+  background-color: #94a3b8;
+  border-radius: 9999px;
+}
 
 .bg-brand-blue { background-color: #0066FF; }
 .text-brand-blue { color: #0066FF; }
@@ -211,4 +228,3 @@
 .animate-gps-reticle {
   animation: gps-reticle-spin 6s linear infinite;
 }
-

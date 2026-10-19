@@ -68,6 +68,8 @@ interface InteractiveMapProps {
   routingEngine?: RoutingEngineType;
   onRoutingEngineChange?: (engine: RoutingEngineType) => void;
   onSelectDropoffLocation?: (addr: string) => void;
+  managedRoute?: boolean;
+  managedRouteInfo?: RoadRouteInfo | null;
 }
 
 export const InteractiveMap: React.FC<InteractiveMapProps> = ({
@@ -99,7 +101,9 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
   isCarpoolActive = false,
   routingEngine = 'GOOGLE_MAPS_ROUTES_API',
   onRoutingEngineChange,
-  onSelectDropoffLocation
+  onSelectDropoffLocation,
+  managedRoute = false,
+  managedRouteInfo = null
 }) => {
   // Container ref for client bounding rect
   const mapContainerRef = useRef<HTMLDivElement>(null);
@@ -379,7 +383,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
 
   // Real-time smooth dynamic tracking & road movement of nearby drivers
   useEffect(() => {
-    if (status !== 'IDLE' && status !== 'FINDING_DRIVER') return;
+    if (!showNearbyDrivers || (status !== 'IDLE' && status !== 'FINDING_DRIVER')) return;
     const interval = setInterval(() => {
       setNearbyDriverOffsets(prev => prev.map(d => {
         let newDx = d.dx;
@@ -435,7 +439,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
       }));
     }, 1200);
     return () => clearInterval(interval);
-  }, [status]);
+  }, [status, showNearbyDrivers]);
 
   // Live positions of nearby rides dynamically surrounding the customer's pickup or current location
   const liveNearbyDrivers = useMemo(() => {
@@ -460,12 +464,14 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
 
   // Synchronous initial fallback route
   const roadRoute = useMemo(() => {
+    if (managedRoute) return managedRouteInfo;
     if (!pickup || !drop) return null;
     return generateActualRoadRoute(pickup, drop);
-  }, [pickup, drop]);
+  }, [pickup, drop, managedRoute, managedRouteInfo]);
 
   // Fetch authentic road network route whenever pickup, drop or routingEngine changes
   useEffect(() => {
+    if (managedRoute) return;
     if (!pickup || !drop) {
       setLiveRealRoute(null);
       return;
@@ -486,9 +492,9 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
       });
 
     return () => { isCancelled = true; };
-  }, [pickup, drop, routingEngine]);
+  }, [pickup, drop, routingEngine, managedRoute]);
 
-  const effectiveRoadRoute = liveRealRoute || roadRoute;
+  const effectiveRoadRoute = managedRoute ? managedRouteInfo : liveRealRoute || roadRoute;
 
   // Carpool Corridor Road Route SVG Path
   const carpoolCorridorSvgPath = useMemo(() => {
@@ -1234,7 +1240,10 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
         {/* 🏁 DESTINATION PIN (When route is active or carpool destination is set) */}
         {drop && (roadRoute || isCarpoolActive) && (
           <div
-            style={{ top: `${dropJunction.y}%`, left: `${dropJunction.x}%` }}
+            style={{
+              top: `${(effectiveRoadRoute?.points.at(-1) || dropJunction).y}%`,
+              left: `${(effectiveRoadRoute?.points.at(-1) || dropJunction).x}%`
+            }}
             className="absolute -translate-x-1/2 -translate-y-full z-20 pointer-events-none"
           >
             <Destination3dPin address={drop} />
@@ -1246,7 +1255,10 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
           isCarpoolActive || status !== 'IDLE' || Boolean(drop && roadRoute) || !showFixedPin
         ) && (
           <div
-            style={{ top: `${pickupJunction.y}%`, left: `${pickupJunction.x}%` }}
+            style={{
+              top: `${(effectiveRoadRoute?.points[0] || pickupJunction).y}%`,
+              left: `${(effectiveRoadRoute?.points[0] || pickupJunction).x}%`
+            }}
             className="absolute -translate-x-1/2 -translate-y-[88%] z-25 pointer-events-auto select-none"
           >
             <div className="relative flex flex-col items-center">

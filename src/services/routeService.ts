@@ -74,29 +74,31 @@ const LIVE_ROAD_ROUTE_CACHE = new Map<string, RealRoadRouteResult>();
 export async function fetchLiveRoadRoute(
   pickupAddress: string,
   dropAddress: string,
-  preferredEngine: RoutingEngineType = 'GOOGLE_MAPS_ROUTES_API'
+  preferredEngine: RoutingEngineType = 'GOOGLE_MAPS_ROUTES_API',
+  pickupCoordinates?: { lat: number; lng: number },
+  dropCoordinates?: { lat: number; lng: number }
 ): Promise<RoadRouteInfo> {
-  const cacheKey = `${pickupAddress.trim().toLowerCase()}_TO_${dropAddress.trim().toLowerCase()}_${preferredEngine}`;
-  
-  try {
-    const realResult = await getRealRoadRoute(pickupAddress, dropAddress, preferredEngine);
-    LIVE_ROAD_ROUTE_CACHE.set(cacheKey, realResult);
+  const cacheKey = `${pickupAddress.trim().toLowerCase()}_${pickupCoordinates?.lat}_${pickupCoordinates?.lng}_TO_${dropAddress.trim().toLowerCase()}_${dropCoordinates?.lat}_${dropCoordinates?.lng}_${preferredEngine}`;
+  const realResult = await getRealRoadRoute(
+    pickupAddress,
+    dropAddress,
+    preferredEngine,
+    pickupCoordinates,
+    dropCoordinates
+  );
+  LIVE_ROAD_ROUTE_CACHE.set(cacheKey, realResult);
 
-    return {
-      pathD: realResult.pathD,
-      points: realResult.canvasPoints,
-      totalDistanceKm: realResult.distanceKm,
-      estimatedTravelTimeMin: realResult.durationMin,
-      pickupAddress,
-      dropAddress,
-      routingEngine: realResult.engine,
-      steps: realResult.steps,
-      isRealRoadEngine: true
-    };
-  } catch (err) {
-    console.warn('Real road routing error, falling back to local geometric graph:', err);
-    return generateActualRoadRoute(pickupAddress, dropAddress);
-  }
+  return {
+    pathD: realResult.pathD,
+    points: realResult.canvasPoints,
+    totalDistanceKm: realResult.distanceKm,
+    estimatedTravelTimeMin: realResult.durationMin,
+    pickupAddress,
+    dropAddress,
+    routingEngine: realResult.engine,
+    steps: realResult.steps,
+    isRealRoadEngine: realResult.isRealRoadEngine
+  };
 }
 
 // Generates actual multi-segment road route between two junctions

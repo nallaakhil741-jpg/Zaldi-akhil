@@ -89,6 +89,10 @@ export interface RideOrder {
   customerPhone: string;
   pickup: string;
   drop: string;
+  pickupPlaceId?: string;
+  dropPlaceId?: string;
+  pickupCoordinates?: { lat: number; lng: number };
+  dropCoordinates?: { lat: number; lng: number };
   distanceKm: number;
   fare: number;
   discount: number;
@@ -104,6 +108,7 @@ export interface RideOrder {
   serviceMode?: ServiceMode;
   parcelType?: string;
   parcelWeightKg?: number;
+  parcelPhotos?: string[];
   luggageWeightKg?: number;
   extraLuggageFee?: number;
   receiverName?: string;
@@ -165,4 +170,3 @@ export interface HeatmapDemandPoint {
   lastPingTime: string;
   category: 'office' | 'airport' | 'station' | 'commercial' | 'university';
 }
-
