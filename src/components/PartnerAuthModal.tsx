@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { 
-  Lock, Shield, Car, X, Check, AlertCircle, Sparkles, ArrowRight,
-  KeyRound, ShieldCheck, Fingerprint, Eye, EyeOff
+  Lock, Shield, Car, X, AlertCircle, Sparkles, ArrowRight,
+  ShieldCheck, Eye, EyeOff
 } from 'lucide-react';
 import { AppRole } from '../types';
 import { sounds } from '../services/audio';
+import { isFirebaseConfigured, signInAdmin } from '../services/firebase';
 
 interface PartnerAuthModalProps {
   isOpen: boolean;
@@ -19,12 +20,15 @@ export const PartnerAuthModal: React.FC<PartnerAuthModalProps> = ({
 }) => {
   const [selectedRole, setSelectedRole] = useState<'DRIVER' | 'ADMIN'>('DRIVER');
   const [pin, setPin] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPin, setShowPin] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   if (!isOpen) return null;
 
-  const handleVerify = (e: React.FormEvent) => {
+  const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
 
@@ -37,15 +41,20 @@ export const PartnerAuthModal: React.FC<PartnerAuthModalProps> = ({
         sounds.playAlert();
         setErrorMsg('Invalid Captain PIN. Try 1234 or tap quick demo below.');
       }
-    } else {
-      if (pin === '9999' || pin === 'admin' || pin.trim() === '') {
-        sounds.playSuccess();
-        onAuthenticate('ADMIN_APP');
-        onClose();
-      } else {
-        sounds.playAlert();
-        setErrorMsg('Invalid Admin Key. Try 9999 or tap quick demo below.');
-      }
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      await signInAdmin(email, password);
+      sounds.playSuccess();
+      onAuthenticate('ADMIN_APP');
+      onClose();
+    } catch (error) {
+      sounds.playAlert();
+      setErrorMsg(error instanceof Error ? error.message : 'Admin sign-in failed.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -85,7 +94,7 @@ export const PartnerAuthModal: React.FC<PartnerAuthModalProps> = ({
             </div>
             <div>
               <h3 className="font-black text-base text-white">Partner Authentication</h3>
-              <p className="text-xs text-slate-400">Captains cockpit & fleet operations dispatch</p>
+              <p className="text-xs text-slate-400">Captain portal & Firebase-protected operations</p>
             </div>
           </div>
           <button 
@@ -103,6 +112,7 @@ export const PartnerAuthModal: React.FC<PartnerAuthModalProps> = ({
             onClick={() => {
               setSelectedRole('DRIVER');
               setPin('');
+              setPassword('');
               setErrorMsg(null);
               sounds.playPop();
             }}
@@ -121,6 +131,7 @@ export const PartnerAuthModal: React.FC<PartnerAuthModalProps> = ({
             onClick={() => {
               setSelectedRole('ADMIN');
               setPin('');
+              setPassword('');
               setErrorMsg(null);
               sounds.playPop();
             }}
@@ -135,11 +146,11 @@ export const PartnerAuthModal: React.FC<PartnerAuthModalProps> = ({
           </button>
         </div>
 
-        {/* Modern PIN Display Form */}
+        {/* Partner credentials */}
         <form onSubmit={handleVerify} className="space-y-3.5">
-          <div>
+          {selectedRole === 'DRIVER' ? <div>
             <div className="flex items-center justify-between text-xs font-bold text-slate-300 mb-1.5">
-              <span>{selectedRole === 'DRIVER' ? 'Captain 4-Digit Security PIN' : 'Ops Admin Master Passkey'}</span>
+              <span>Captain 4-Digit Security PIN</span>
               <button
                 type="button"
                 onClick={() => setShowPin(!showPin)}
@@ -155,7 +166,7 @@ export const PartnerAuthModal: React.FC<PartnerAuthModalProps> = ({
                 type={showPin ? 'text' : 'password'}
                 value={pin}
                 onChange={(e) => setPin(e.target.value)}
-                placeholder={selectedRole === 'DRIVER' ? 'e.g. 1234' : 'e.g. 9999'}
+                placeholder="e.g. 1234"
                 className="w-full px-4 py-3 rounded-2xl bg-slate-950 border border-slate-800 font-mono text-center text-base tracking-[0.4em] text-white outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
               />
             </div>
@@ -166,10 +177,50 @@ export const PartnerAuthModal: React.FC<PartnerAuthModalProps> = ({
                 <span>{errorMsg}</span>
               </div>
             )}
-          </div>
+          </div> : <div className="space-y-3">
+            {isFirebaseConfigured ? (
+              <>
+                <label className="block text-xs font-bold text-slate-300">
+                  Admin email
+                  <input
+                    type="email"
+                    autoComplete="username"
+                    required
+                    value={email}
+                    onChange={(event) => setEmail(event.target.value)}
+                    className="mt-1.5 w-full rounded-2xl border border-slate-800 bg-slate-950 px-4 py-3 text-sm text-white outline-none focus:border-blue-500"
+                    placeholder="admin@example.com"
+                  />
+                </label>
+                <label className="block text-xs font-bold text-slate-300">
+                  Password
+                  <input
+                    type={showPin ? 'text' : 'password'}
+                    autoComplete="current-password"
+                    required
+                    value={password}
+                    onChange={(event) => setPassword(event.target.value)}
+                    className="mt-1.5 w-full rounded-2xl border border-slate-800 bg-slate-950 px-4 py-3 text-sm text-white outline-none focus:border-blue-500"
+                    placeholder="Firebase Authentication password"
+                  />
+                </label>
+              </>
+            ) : (
+              <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-3 text-xs leading-relaxed text-amber-200">
+                Firebase is not configured. You can explore the admin console in local demo mode; records will not persist.
+                Add the <code>VITE_FIREBASE_*</code> values to <code>.env.local</code> to enable secure sign-in and live data.
+              </div>
+            )}
+            {errorMsg && (
+              <div className="flex items-center gap-1.5 text-xs text-rose-400 font-semibold">
+                <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
+                <span>{errorMsg}</span>
+              </div>
+            )}
+          </div>}
 
           {/* Interactive Modern Keypad for Quick Mobile Input */}
-          <div className="grid grid-cols-3 gap-1.5 pt-1">
+          {selectedRole === 'DRIVER' && <div className="grid grid-cols-3 gap-1.5 pt-1">
             {['1', '2', '3', '4', '5', '6', '7', '8', '9', 'C', '0', '⌫'].map(btn => (
               <button
                 key={btn}
@@ -195,15 +246,18 @@ export const PartnerAuthModal: React.FC<PartnerAuthModalProps> = ({
                 {btn}
               </button>
             ))}
-          </div>
+          </div>}
 
-          <button
-            type="submit"
-            className="w-full py-3 rounded-2xl bg-gradient-to-r from-brand-blue to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-black text-sm shadow-xl shadow-blue-600/30 transition flex items-center justify-center gap-2 active:scale-98"
-          >
-            <span>Authenticate & Launch Portal</span>
-            <ArrowRight className="w-4 h-4" />
-          </button>
+          {(selectedRole === 'DRIVER' || isFirebaseConfigured) && (
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="w-full py-3 rounded-2xl bg-gradient-to-r from-brand-blue to-blue-600 hover:from-blue-600 hover:to-blue-700 disabled:opacity-60 text-white font-black text-sm shadow-xl shadow-blue-600/30 transition flex items-center justify-center gap-2 active:scale-98"
+            >
+              <span>{isSubmitting ? 'Authenticating…' : 'Authenticate & Launch Portal'}</span>
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          )}
         </form>
 
         {/* 1-Click Demo Badges for Instant Evaluation */}
@@ -211,12 +265,12 @@ export const PartnerAuthModal: React.FC<PartnerAuthModalProps> = ({
           <div className="flex items-center justify-between text-[11px] font-bold text-slate-400">
             <span className="flex items-center gap-1.5">
               <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-              <span>Reviewer 1-Click Demo Login</span>
+              <span>{isFirebaseConfigured ? 'Driver demo access' : 'Local demo access'}</span>
             </span>
-            <span className="text-[10px] text-slate-500">Auto-Bypass</span>
+            <span className="text-[10px] text-slate-500">{isFirebaseConfigured ? 'Driver only' : 'No persistence'}</span>
           </div>
 
-          <div className="grid grid-cols-2 gap-2">
+          <div className={`grid ${isFirebaseConfigured ? 'grid-cols-1' : 'grid-cols-2'} gap-2`}>
             <button
               onClick={() => handleQuickDemo('DRIVER_APP')}
               className="p-2.5 rounded-xl bg-slate-950/90 hover:bg-slate-800/90 border border-slate-800 text-left transition group"
@@ -228,16 +282,18 @@ export const PartnerAuthModal: React.FC<PartnerAuthModalProps> = ({
               <div className="text-[10px] text-slate-400 mt-0.5">PIN 1234 • Ready to drive</div>
             </button>
 
-            <button
-              onClick={() => handleQuickDemo('ADMIN_APP')}
-              className="p-2.5 rounded-xl bg-slate-950/90 hover:bg-slate-800/90 border border-slate-800 text-left transition group"
-            >
-              <div className="text-xs font-black text-white group-hover:text-indigo-400 flex items-center gap-1">
-                <span>Ops Command</span>
-                <span className="text-indigo-400">→</span>
-              </div>
-              <div className="text-[10px] text-slate-400 mt-0.5">Key 9999 • D3 GIS & Heatmaps</div>
-            </button>
+            {!isFirebaseConfigured && (
+              <button
+                onClick={() => handleQuickDemo('ADMIN_APP')}
+                className="p-2.5 rounded-xl bg-slate-950/90 hover:bg-slate-800/90 border border-slate-800 text-left transition group"
+              >
+                <div className="text-xs font-black text-white group-hover:text-indigo-400 flex items-center gap-1">
+                  <span>Admin Console</span>
+                  <span className="text-indigo-400">→</span>
+                </div>
+                <div className="text-[10px] text-slate-400 mt-0.5">Local demo • Changes are temporary</div>
+              </button>
+            )}
           </div>
         </div>
 

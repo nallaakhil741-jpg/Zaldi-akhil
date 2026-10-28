@@ -15,6 +15,7 @@ const FleetTelematicsGIS = lazy(() => import('./components/FleetTelematicsGIS').
 const ArchitecturalDepotViewer = lazy(() => import('./components/ArchitecturalDepotViewer').then(({ ArchitecturalDepotViewer }) => ({ default: ArchitecturalDepotViewer })));
 import { sounds } from './services/audio';
 import { tripChatBroadcaster } from './services/tripChatService';
+import { signOutFirebase } from './services/firebase';
 import { 
   Smartphone, UserCheck, Shield, Sparkles, 
   Volume2, Car, Bell, ExternalLink, KeyRound, LogOut, ArrowLeft,
@@ -93,6 +94,14 @@ export default function App() {
 
   const handleUpdateDriver = (driverId: string, updates: Partial<Driver>) => {
     setDrivers(prev => prev.map(d => d.id === driverId ? { ...d, ...updates } : d));
+  };
+
+  const handleAddDriver = (driver: Driver) => {
+    setDrivers(prev => [driver, ...prev.filter(existing => existing.id !== driver.id)]);
+  };
+
+  const handleDeleteDriver = (driverId: string) => {
+    setDrivers(prev => prev.filter(driver => driver.id !== driverId));
   };
 
   const handleSimulateIncomingRide = () => {
@@ -336,8 +345,13 @@ export default function App() {
             <button
               onClick={() => {
                 sounds.playPop();
-                setAuthenticatedRole(null);
-                setActiveApp('CUSTOMER_APP');
+                void signOutFirebase().then(() => {
+                  setAuthenticatedRole(null);
+                  setActiveApp('CUSTOMER_APP');
+                }).catch((error: unknown) => {
+                  console.error('Firebase sign-out failed:', error);
+                  window.alert(error instanceof Error ? error.message : 'Unable to sign out.');
+                });
               }}
               className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] transition"
             >
@@ -425,6 +439,10 @@ export default function App() {
             orders={orders}
             onUpdateDriver={handleUpdateDriver}
             onUpdateOrder={handleUpdateOrder}
+            onAddDriver={handleAddDriver}
+            onDeleteDriver={handleDeleteDriver}
+            onAddOrder={handleNewOrder}
+            onDeleteOrder={(orderId) => setOrders(prev => prev.filter(order => order.id !== orderId))}
           />
         )}
       </main>
